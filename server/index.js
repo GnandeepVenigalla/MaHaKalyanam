@@ -51,13 +51,17 @@ async function ensureDB() {
 }
 
 // Ensure DB is connected before any API route
-app.use('/api', async (_req, _res, next) => {
+app.use('/api', async (_req, res, next) => {
   try {
     await ensureDB();
+    next();
   } catch (e) {
     console.error('DB connection error:', e);
+    res.status(500).json({
+      success: false,
+      message: 'Database connection failed: ' + e.message,
+    });
   }
-  next();
 });
 
 // ── Mount API Routes ────────────────────────────────────────
