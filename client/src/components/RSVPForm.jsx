@@ -9,7 +9,6 @@ const initialForm = {
   phone: '',
   guests: 1,
   attending: 'yes',
-  dietary: '',
   message: '',
 };
 
@@ -197,20 +196,6 @@ export default function RSVPForm() {
                       </label>
                     ))}
                   </div>
-                </div>
-
-                {/* Dietary */}
-                <div className="input-group">
-                  <label htmlFor="rsvp-dietary">Dietary Preferences</label>
-                  <input
-                    type="text"
-                    id="rsvp-dietary"
-                    name="dietary"
-                    className="input-field"
-                    placeholder="Vegetarian, allergies, etc."
-                    value={form.dietary}
-                    onChange={handleChange}
-                  />
                 </div>
 
                 {/* Message */}

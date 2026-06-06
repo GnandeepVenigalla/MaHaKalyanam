@@ -160,17 +160,6 @@ async function seedEvents() {
       sortOrder: 1,
     },
     {
-      name: 'Mehendi & Sangeet',
-      date: '2026-06-23',
-      time: '04:00 PM',
-      venue: 'Sri Lakshmi Convention Hall',
-      address: 'Hyderabad, Telangana',
-      description:
-        'An evening of intricate mehendi designs, music, dance, and celebrations with family and friends.',
-      icon: '🎶',
-      sortOrder: 2,
-    },
-    {
       name: 'Wedding Ceremony',
       date: '2026-06-24',
       time: '09:30 AM',
@@ -179,7 +168,7 @@ async function seedEvents() {
       description:
         'The sacred Telugu wedding ceremony performed with traditional Vedic rituals, mangalsutra dharana, and saptapadi around the holy fire.',
       icon: '💍',
-      sortOrder: 3,
+      sortOrder: 2,
     },
     {
       name: 'Reception',
@@ -190,7 +179,7 @@ async function seedEvents() {
       description:
         'A grand reception dinner to celebrate the newlyweds with delicious food, music, and merriment.',
       icon: '🎉',
-      sortOrder: 4,
+      sortOrder: 3,
     },
   ];
 

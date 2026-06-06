@@ -1,21 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SiteProvider, useSiteData } from '../context/SiteContext';
+import EnvelopeIntro from '../components/EnvelopeIntro';
 import Navigation from '../components/Navigation';
 import Hero from '../components/Hero';
-import Countdown from '../components/Countdown';
-import CoupleStory from '../components/CoupleStory';
 import FloralDivider from '../components/FloralDivider';
 import EventDetails from '../components/EventDetails';
 import FoodMenu from '../components/FoodMenu';
 import YouTubePlayer from '../components/YouTubePlayer';
-import Akshintalu from '../components/Akshintalu';
 import RSVPForm from '../components/RSVPForm';
-import GiftRegistry from '../components/GiftRegistry';
 import FamilyDetails from '../components/FamilyDetails';
 import Footer from '../components/Footer';
 
 function HomeContent() {
-  const { loading } = useSiteData();
+  const { loading, content } = useSiteData();
+  const [envelopeOpen, setEnvelopeOpen] = useState(false);
 
   if (loading) {
     return (
@@ -32,21 +30,24 @@ function HomeContent() {
 
   return (
     <>
+      {/* Envelope intro overlay */}
+      {!envelopeOpen && (
+        <EnvelopeIntro
+          onOpen={() => setEnvelopeOpen(true)}
+          groomName={content.groom_name}
+          brideName={content.bride_name}
+        />
+      )}
+
       <Navigation />
       <Hero />
-      <Countdown />
-      <CoupleStory />
-      <FloralDivider />
       <EventDetails />
       <FloralDivider />
       <FoodMenu />
       <FloralDivider />
       <YouTubePlayer />
       <FloralDivider />
-      <Akshintalu />
       <RSVPForm />
-      <FloralDivider />
-      <GiftRegistry />
       <FamilyDetails />
       <Footer />
     </>

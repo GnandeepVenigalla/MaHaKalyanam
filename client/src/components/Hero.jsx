@@ -280,7 +280,7 @@ export default function Hero() {
       >
         {/* Sacred invocation */}
         <motion.div className="hero__sacred" variants={fadeUp}>
-          <span className="hero__om">ॐ</span>
+          <div className="hero__ganesh" aria-label="Lord Ganesha" role="img" />
           <p className="hero__invocation">Sri Ganeshaya Namaha</p>
         </motion.div>
 
@@ -453,13 +453,33 @@ export default function Hero() {
           margin-bottom: var(--space-xl);
         }
 
-        .hero__om {
+        .hero__ganesh {
           display: block;
-          font-size: 3rem;
-          color: var(--color-gold);
-          line-height: 1;
-          text-shadow: 0 0 20px rgba(212, 168, 83, 0.4);
-          margin-bottom: var(--space-sm);
+          width: 90px;
+          height: 90px;
+          margin: 0 auto var(--space-sm);
+          background-color: var(--color-gold);
+          -webkit-mask-image: url('/ganesha.png');
+          mask-image: url('/ganesha.png');
+          -webkit-mask-size: contain;
+          mask-size: contain;
+          -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+          -webkit-mask-position: center;
+          mask-position: center;
+          filter: drop-shadow(0 0 20px rgba(212, 168, 83, 0.5));
+          animation: ganeshGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes ganeshGlow {
+          0%, 100% {
+            filter: drop-shadow(0 0 15px rgba(212, 168, 83, 0.4));
+            opacity: 0.9;
+          }
+          50% {
+            filter: drop-shadow(0 0 25px rgba(212, 168, 83, 0.6));
+            opacity: 1;
+          }
         }
 
         .hero__invocation {
