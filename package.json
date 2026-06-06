@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "MaHaKalyanam Wedding Invitation — Ranjith & Nithaya",
   "private": true,
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "dev": "concurrently -n \"API,WEB\" -c \"yellow,cyan\" \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && npm run dev",
