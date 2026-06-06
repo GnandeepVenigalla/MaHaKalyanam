@@ -13,10 +13,5 @@
       "runtime": "@vercel/node@3.0.0",
       "maxDuration": 30
     }
-  },
-  "env": {
-    "MONGO_URI": "@mongo_uri",
-    "JWT_SECRET": "@jwt_secret",
-    "ADMIN_PASSWORD": "@admin_password"
   }
 }
