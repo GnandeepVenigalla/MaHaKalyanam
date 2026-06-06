@@ -470,4 +470,80 @@ router.delete('/gifts/:id', verifyToken, async (req, res) => {
   }
 });
 
+// ══════════════════════════════════════════════════════════════
+// THEME COLORS
+// ══════════════════════════════════════════════════════════════
+
+// GET /api/theme — fetch all theme-related keys (public)
+router.get('/theme', async (_req, res) => {
+  try {
+    const rows = await SiteContent.find({ key: /^theme_/ });
+    const theme = {};
+    for (const row of rows) {
+      theme[row.key] = row.value;
+    }
+    return res.json({ success: true, data: theme });
+  } catch (error) {
+    console.error('Theme fetch error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch theme.' });
+  }
+});
+
+// PUT /api/theme — update theme colors (admin)
+router.put('/theme', verifyToken, async (req, res) => {
+  try {
+    const updates = req.body;
+    if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
+      return res.status(400).json({ success: false, message: 'Body must be an object of key-value pairs.' });
+    }
+    const entries = Object.entries(updates);
+    for (const [key, value] of entries) {
+      if (!key.startsWith('theme_')) continue;
+      await SiteContent.findOneAndUpdate(
+        { key },
+        { key, value: String(value), updatedAt: new Date() },
+        { upsert: true, new: true }
+      );
+    }
+    return res.json({ success: true, message: 'Theme updated.' });
+  } catch (error) {
+    console.error('Theme update error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update theme.' });
+  }
+});
+
+// POST /api/theme/reset — reset theme to defaults (admin)
+router.post('/theme/reset', verifyToken, async (_req, res) => {
+  try {
+    const defaults = {
+      theme_primary: '#4A0E1B',
+      theme_primary_deep: '#2D0A12',
+      theme_primary_light: '#6B1D30',
+      theme_secondary: '#3A0B15',
+      theme_secondary_dark: '#1A0509',
+      theme_accent: '#D4A853',
+      theme_accent_light: '#E8C87A',
+      theme_accent_dark: '#B8922F',
+      theme_accent_pale: '#F0D78C',
+      theme_text_primary: '#FFF8F0',
+      theme_text_secondary: 'rgba(255, 248, 240, 0.75)',
+      theme_text_accent: '#D4A853',
+      theme_neutral_1: '#F5E6CC',
+      theme_neutral_2: '#FFF8F0',
+      theme_neutral_3: '#FDF5E8',
+    };
+    for (const [key, value] of Object.entries(defaults)) {
+      await SiteContent.findOneAndUpdate(
+        { key },
+        { key, value, updatedAt: new Date() },
+        { upsert: true, new: true }
+      );
+    }
+    return res.json({ success: true, message: 'Theme reset to defaults.', data: defaults });
+  } catch (error) {
+    console.error('Theme reset error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to reset theme.' });
+  }
+});
+
 export default router;

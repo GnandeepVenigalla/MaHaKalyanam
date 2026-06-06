@@ -183,6 +183,26 @@ export async function deleteGift(id) {
   });
 }
 
+// ─── Theme ───────────────────────────────────────────────
+export async function fetchTheme() {
+  return request('/api/theme');
+}
+
+export async function updateTheme(data) {
+  return request('/api/theme', {
+    method: 'PUT',
+    headers: getHeaders(true),
+    body: JSON.stringify(data),
+  });
+}
+
+export async function resetTheme() {
+  return request('/api/theme/reset', {
+    method: 'POST',
+    headers: getHeaders(true),
+  });
+}
+
 // ─── Akshintalu ──────────────────────────────────────────
 export async function incrementAkshintalu() {
   return request('/api/akshintalu', {
