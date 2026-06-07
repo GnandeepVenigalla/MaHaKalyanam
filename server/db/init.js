@@ -14,14 +14,18 @@ const siteContentSchema = new mongoose.Schema({
 });
 
 const eventSchema = new mongoose.Schema({
-  name:        { type: String, required: true },
-  date:        { type: String, required: true },
-  time:        { type: String },
-  venue:       { type: String },
-  address:     { type: String },
-  description: { type: String },
-  icon:        { type: String },
-  sortOrder:   { type: Number, default: 0 },
+  name:            { type: String, required: true },
+  subtitle:        { type: String },
+  date:            { type: String, required: true },
+  time:            { type: String },
+  venue:           { type: String },
+  address:         { type: String },
+  description:     { type: String },
+  guestsAttending: { type: String },
+  icon:            { type: String },
+  mapLink:         { type: String },
+  calendarLink:    { type: String },
+  sortOrder:       { type: Number, default: 0 },
 });
 
 const foodMenuSchema = new mongoose.Schema({
@@ -36,8 +40,15 @@ const rsvpResponseSchema = new mongoose.Schema({
   name:      { type: String, required: true },
   email:     { type: String },
   phone:     { type: String },
-  numGuests: { type: Number, default: 1 },
+  numGuests: { type: Number, default: 0 },
   attending: { type: String, enum: ['yes', 'no', 'maybe'], default: 'yes' },
+  events: [
+    {
+      eventId: String,
+      eventName: String,
+      guests: Number
+    }
+  ],
   dietary:   { type: String },
   message:   { type: String },
   createdAt: { type: Date, default: Date.now },

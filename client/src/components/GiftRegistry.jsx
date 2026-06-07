@@ -39,7 +39,7 @@ export default function GiftRegistry() {
           {displayGifts.map((gift, i) => (
             <motion.div
               key={gift.id || i}
-              className="gifts__card glass-card gold-border"
+              className="gifts__card"
               custom={i}
               variants={cardVariants}
               initial="hidden"
@@ -55,16 +55,15 @@ export default function GiftRegistry() {
                   <span className="gifts__details-label">{gift.details}</span>
                 </div>
               )}
-              {gift.link && (
-                <a
-                  href={gift.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="gifts__link btn btn--outline btn--sm"
-                >
-                  View Gift Options →
-                </a>
-              )}
+              
+              <a
+                href={gift.link || `https://www.amazon.com/s?k=${encodeURIComponent(gift.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="gifts__link"
+              >
+                {gift.link ? 'View Gift Options →' : 'Search on Amazon →'}
+              </a>
             </motion.div>
           ))}
         </div>
@@ -81,84 +80,137 @@ export default function GiftRegistry() {
 
       <style>{`
         .gifts {
-          background: var(--color-burgundy-deep);
+          background: #EFE9D9; /* Matching the Families section background */
+          padding: 80px 24px;
+        }
+
+        .section__header {
+          text-align: center;
+          margin-bottom: 60px;
+        }
+
+        .section__title {
+          font-family: var(--font-heading);
+          font-size: 3.5rem;
+          font-style: italic;
+          color: #702632; /* Burgundy */
+          font-weight: 400;
+          margin-bottom: 16px;
+        }
+
+        .section__subtitle {
+          font-family: var(--font-body);
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #A68B61; /* Gold */
+          letter-spacing: 0.3em;
+          text-transform: uppercase;
         }
 
         .gifts__grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: var(--space-xl);
+          gap: 40px;
           max-width: 960px;
           margin: 0 auto;
         }
 
         .gifts__card {
-          padding: var(--space-2xl) var(--space-xl);
+          background: #FDFBF7; /* Slightly lighter than the background for contrast */
+          border: 1px solid #D8CEB3;
+          padding: 50px 30px;
           text-align: center;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: var(--space-md);
+          gap: 20px;
+          transition: transform 0.3s ease;
+        }
+
+        .gifts__card:hover {
+          transform: translateY(-5px);
         }
 
         .gifts__icon {
           font-size: 3rem;
           line-height: 1;
-          margin-bottom: var(--space-sm);
-          filter: drop-shadow(0 0 12px rgba(212, 168, 83, 0.3));
+          margin-bottom: 10px;
         }
 
         .gifts__card-title {
           font-family: var(--font-heading);
-          font-size: 1.4rem;
-          font-weight: 600;
-          color: var(--color-gold);
-          letter-spacing: 0.02em;
+          font-size: 2rem;
+          font-style: italic;
+          font-weight: 400;
+          color: #702632; /* Burgundy */
         }
 
         .gifts__card-desc {
-          font-size: 0.95rem;
-          color: var(--text-secondary);
-          line-height: 1.7;
+          font-family: var(--font-heading);
+          font-size: 1.15rem;
+          color: #2D2D2D;
+          line-height: 1.6;
           text-align: center;
-          max-width: none;
         }
 
         .gifts__details {
-          background: rgba(212, 168, 83, 0.08);
-          border: 1px solid rgba(212, 168, 83, 0.2);
-          border-radius: var(--radius-md);
-          padding: var(--space-sm) var(--space-lg);
-          margin-top: var(--space-xs);
+          background: #EFE9D9;
+          border: 1px dashed #D8CEB3;
+          padding: 10px 20px;
+          margin-top: 5px;
         }
 
         .gifts__details-label {
           font-family: var(--font-body);
-          font-size: 0.9rem;
-          color: var(--color-gold-light);
+          font-size: 0.85rem;
+          color: #2D2D2D;
           font-weight: 500;
-          letter-spacing: 0.03em;
+          letter-spacing: 0.05em;
         }
 
         .gifts__link {
-          margin-top: var(--space-sm);
+          margin-top: 15px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-family: var(--font-body);
+          font-size: 0.75rem;
+          font-weight: 600;
+          letter-spacing: 0.2em;
+          color: #A68B61;
+          text-transform: uppercase;
+          transition: all 0.3s;
+          border: 1px solid #C4B59D;
+          padding: 12px 24px;
+          border-radius: 50px;
+          text-decoration: none;
+        }
+        
+        .gifts__link:hover {
+          background: #A68B61;
+          color: #FFFFFF;
+          border-color: #A68B61;
         }
 
         .gifts__note {
           text-align: center;
           font-family: var(--font-heading);
-          font-size: 1.05rem;
+          font-size: 1.25rem;
           font-style: italic;
-          color: var(--text-tertiary);
-          margin-top: var(--space-3xl);
-          max-width: 500px;
+          color: #702632;
+          margin-top: 60px;
+          max-width: 600px;
           margin-left: auto;
           margin-right: auto;
+          opacity: 0.8;
         }
 
         @media (max-width: 600px) {
           .gifts__grid {
             grid-template-columns: 1fr;
+          }
+          .section__title {
+            font-size: 2.8rem;
           }
         }
       `}</style>

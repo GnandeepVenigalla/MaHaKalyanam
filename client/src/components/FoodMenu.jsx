@@ -9,11 +9,8 @@ const defaultMenu = [
   { id: 4, category: 'Main Course', name: 'Hyderabadi Biryani', description: 'Aromatic basmati rice with spices and saffron', is_veg: false },
   { id: 5, category: 'Main Course', name: 'Paneer Butter Masala', description: 'Creamy tomato gravy with cottage cheese', is_veg: true },
   { id: 6, category: 'Main Course', name: 'Dal Makhani', description: 'Slow-cooked black lentils in butter cream', is_veg: true },
-  { id: 7, category: 'Main Course', name: 'Gutti Vankaya', description: 'Stuffed brinjal curry, Andhra style', is_veg: true },
   { id: 8, category: 'Desserts', name: 'Gulab Jamun', description: 'Deep-fried milk dumplings in rose syrup', is_veg: true },
-  { id: 9, category: 'Desserts', name: 'Double Ka Meetha', description: 'Hyderabadi bread pudding with nuts', is_veg: true },
   { id: 10, category: 'Beverages', name: 'Mango Lassi', description: 'Creamy yogurt drink with fresh mangoes', is_veg: true },
-  { id: 11, category: 'Beverages', name: 'Masala Chai', description: 'Spiced Indian tea with cardamom and ginger', is_veg: true },
 ];
 
 const categories = ['All', 'Starters', 'Main Course', 'Desserts', 'Beverages'];
@@ -21,209 +18,201 @@ const categories = ['All', 'Starters', 'Main Course', 'Desserts', 'Beverages'];
 export default function FoodMenu() {
   const { menu } = useSiteData();
   const [activeCategory, setActiveCategory] = useState('All');
-  const displayMenu = menu.length > 0 ? menu : defaultMenu;
+  const displayMenu = menu?.length > 0 ? menu : defaultMenu;
 
   const filteredItems = activeCategory === 'All'
     ? displayMenu
     : displayMenu.filter(item => item.category === activeCategory);
 
+  const groupedItems = {};
+  if (activeCategory === 'All') {
+    filteredItems.forEach(item => {
+      if (!groupedItems[item.category]) groupedItems[item.category] = [];
+      groupedItems[item.category].push(item);
+    });
+  } else {
+    groupedItems[activeCategory] = filteredItems;
+  }
+
   return (
-    <section className="food-menu section" id="menu">
-      <div className="section__container">
-        <div className="section__header">
-          <h2 className="section__title">Wedding Feast</h2>
-          <p className="section__subtitle">A culinary celebration of flavors</p>
+    <section className="section" id="menu">
+      <div className="section__container menu-container">
+        <motion.div 
+          className="section__header"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <span className="section__label">The Feast</span>
+          <h2 className="section__title">Culinary Delights</h2>
+          <p className="section__subtitle">A curated menu for our special day</p>
           <div className="section__ornament">
             <span className="section__ornament-dot" />
           </div>
-        </div>
+        </motion.div>
 
-        {/* Category tabs */}
-        <div className="food-menu__tabs">
+        <div className="menu-tabs">
           {categories.map(cat => (
             <button
               key={cat}
-              className={`food-menu__tab ${activeCategory === cat ? 'food-menu__tab--active' : ''}`}
+              className={`menu-tab ${activeCategory === cat ? 'menu-tab--active' : ''}`}
               onClick={() => setActiveCategory(cat)}
             >
               {cat}
               {activeCategory === cat && (
-                <motion.div
-                  className="food-menu__tab-indicator"
-                  layoutId="menuTab"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                />
+                <motion.div className="menu-tab-bg" layoutId="menuTabPill" />
               )}
             </button>
           ))}
         </div>
 
-        {/* Menu grid */}
-        <motion.div className="food-menu__grid" layout>
-          <AnimatePresence mode="popLayout">
-            {filteredItems.map(item => (
-              <motion.div
-                key={item.id || item.name}
-                className="food-menu__item glass-card"
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="food-menu__item-header">
-                  <h4 className="food-menu__item-name">{item.name}</h4>
-                  <span className={`food-menu__veg-badge ${item.is_veg ? 'food-menu__veg-badge--veg' : 'food-menu__veg-badge--nonveg'}`}>
-                    <span className="food-menu__veg-dot" />
-                  </span>
+        <div className="menu-list glass-card">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeCategory}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {Object.entries(groupedItems).map(([category, items]) => (
+                <div className="menu-category" key={category}>
+                  {activeCategory === 'All' && (
+                    <h3 className="menu-category-title">{category}</h3>
+                  )}
+                  <div className="menu-items">
+                    {items.map((item) => (
+                      <div className="menu-item" key={item.id || item.name}>
+                        <div className="menu-item-main">
+                          <div className="menu-item-left">
+                            <span className={`menu-veg-dot ${item.is_veg ? 'veg' : 'nonveg'}`} />
+                            <span className="menu-item-name">{item.name}</span>
+                          </div>
+                          <div className="menu-item-dots" />
+                        </div>
+                        {item.description && (
+                          <div className="menu-item-desc">{item.description}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                {item.description && (
-                  <p className="food-menu__item-desc">{item.description}</p>
-                )}
-                {item.category && activeCategory === 'All' && (
-                  <span className="food-menu__item-category">{item.category}</span>
-                )}
-              </motion.div>
-            ))}
+              ))}
+            </motion.div>
           </AnimatePresence>
-        </motion.div>
+        </div>
       </div>
 
       <style>{`
-        .food-menu {
-          background: var(--color-burgundy-deep);
+        .menu-container {
+          max-width: 800px;
         }
 
-        .food-menu__tabs {
+        .menu-tabs {
           display: flex;
           justify-content: center;
-          gap: var(--space-sm);
-          margin-bottom: var(--space-3xl);
+          gap: 8px;
+          margin-bottom: 48px;
           flex-wrap: wrap;
         }
 
-        .food-menu__tab {
+        .menu-tab {
           position: relative;
-          padding: var(--space-sm) var(--space-xl);
-          font-family: var(--font-heading);
-          font-size: 1rem;
+          padding: 10px 24px;
+          font-family: var(--font-body);
+          font-size: 0.8rem;
           font-weight: 500;
-          color: var(--text-tertiary);
-          background: transparent;
-          border: 1px solid transparent;
-          border-radius: var(--radius-full);
-          cursor: pointer;
-          transition: all var(--transition-base);
-          letter-spacing: 0.05em;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--text-secondary);
+          z-index: 1;
         }
 
-        .food-menu__tab:hover {
-          color: var(--text-primary);
+        .menu-tab--active {
+          color: var(--color-ivory);
         }
 
-        .food-menu__tab--active {
-          color: var(--text-on-gold);
-        }
-
-        .food-menu__tab-indicator {
+        .menu-tab-bg {
           position: absolute;
           inset: 0;
-          background: var(--gradient-gold);
+          background: var(--color-burgundy);
           border-radius: var(--radius-full);
           z-index: -1;
         }
 
-        .food-menu__grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: var(--space-lg);
-          max-width: 1000px;
-          margin: 0 auto;
+        .menu-list {
+          padding: 40px 48px;
         }
 
-        .food-menu__item {
-          padding: var(--space-xl);
+        .menu-category {
+          margin-bottom: 40px;
         }
 
-        .food-menu__item-header {
+        .menu-category:last-child {
+          margin-bottom: 0;
+        }
+
+        .menu-category-title {
+          font-family: var(--font-cursive);
+          font-size: 2rem;
+          color: var(--color-gold-dark);
+          text-align: center;
+          margin-bottom: 24px;
+        }
+
+        .menu-item {
+          margin-bottom: 20px;
+        }
+
+        .menu-item:last-child {
+          margin-bottom: 0;
+        }
+
+        .menu-item-main {
           display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: var(--space-md);
-          margin-bottom: var(--space-sm);
+          align-items: flex-end;
+          gap: 16px;
         }
 
-        .food-menu__item-name {
+        .menu-item-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-shrink: 0;
+        }
+
+        .menu-item-name {
           font-family: var(--font-heading);
-          font-size: 1.15rem;
-          font-weight: 600;
+          font-size: 1.25rem;
           color: var(--text-primary);
         }
 
-        .food-menu__veg-badge {
-          width: 18px;
-          height: 18px;
-          border: 1.5px solid;
-          border-radius: 3px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          margin-top: 3px;
+        .menu-item-dots {
+          flex: 1;
+          border-bottom: 1.5px dotted var(--color-champagne);
+          margin-bottom: 8px;
         }
 
-        .food-menu__veg-badge--veg {
-          border-color: #2ECC71;
-        }
-
-        .food-menu__veg-badge--nonveg {
-          border-color: #E34234;
-        }
-
-        .food-menu__veg-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-        }
-
-        .food-menu__veg-badge--veg .food-menu__veg-dot {
-          background: #2ECC71;
-        }
-
-        .food-menu__veg-badge--nonveg .food-menu__veg-dot {
-          background: #E34234;
-        }
-
-        .food-menu__item-desc {
+        .menu-item-desc {
+          font-family: var(--font-body);
           font-size: 0.9rem;
           color: var(--text-tertiary);
-          line-height: 1.5;
+          margin-top: 4px;
+          padding-left: 20px;
         }
 
-        .food-menu__item-category {
-          display: inline-block;
-          font-size: 0.7rem;
-          color: var(--color-gold);
-          background: rgba(212, 168, 83, 0.1);
-          padding: 2px 10px;
-          border-radius: var(--radius-full);
-          margin-top: var(--space-md);
-          font-weight: 500;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
+        .menu-veg-dot {
+          width: 8px; height: 8px;
+          border-radius: 50%;
         }
+        .menu-veg-dot.veg { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.2); }
+        .menu-veg-dot.nonveg { background: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.2); }
 
-        @media (max-width: 600px) {
-          .food-menu__grid {
-            grid-template-columns: 1fr;
-          }
-          .food-menu__tabs {
-            gap: var(--space-xs);
-          }
-          .food-menu__tab {
-            padding: var(--space-xs) var(--space-md);
-            font-size: 0.9rem;
-          }
+        @media (max-width: 768px) {
+          .menu-list { padding: 32px 24px; }
+          .menu-item-main { flex-direction: column; align-items: flex-start; gap: 4px; }
+          .menu-item-dots { display: none; }
         }
       `}</style>
     </section>

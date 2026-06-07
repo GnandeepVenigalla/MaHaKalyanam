@@ -5,128 +5,80 @@ import { FiMenu, FiX } from 'react-icons/fi';
 const navLinks = [
   { id: 'home', label: 'Home' },
   { id: 'events', label: 'Events' },
-  { id: 'menu', label: 'Menu' },
+  { id: 'gifts', label: 'Gifts' },
   { id: 'rsvp', label: 'RSVP' },
-  { id: 'blessings', label: 'Blessings' },
 ];
 
 export default function Navigation() {
   const [visible, setVisible] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('home');
+  const [active, setActive] = useState('home');
 
-  // Show nav after scrolling past hero
   useEffect(() => {
     const onScroll = () => {
-      setVisible(window.scrollY > window.innerHeight * 0.5);
-
-      // Determine active section
+      setVisible(window.scrollY > window.innerHeight * 0.15);
       const sections = navLinks.map(l => document.getElementById(l.id)).filter(Boolean);
-      let current = 'home';
-      for (const section of sections) {
-        const rect = section.getBoundingClientRect();
-        if (rect.top <= 150) {
-          current = section.id;
-        }
-      }
-      setActiveSection(current);
+      let cur = 'home';
+      for (const s of sections) { if (s.getBoundingClientRect().top <= 120) cur = s.id; }
+      setActive(cur);
     };
-
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const scrollTo = useCallback((id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-      setMobileOpen(false);
-    }
+  const go = useCallback((id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    setMobileOpen(false);
   }, []);
 
   return (
     <>
       <AnimatePresence>
         {visible && (
-          <motion.nav
-            className="nav"
-            initial={{ y: -80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -80, opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          <motion.nav 
+            className="nav" 
+            initial={{ y: -100, opacity: 0 }} 
+            animate={{ y: 0, opacity: 1 }} 
+            exit={{ y: -100, opacity: 0 }} 
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="nav__inner">
-              <button
-                className="nav__logo"
-                onClick={() => scrollTo('home')}
-              >
-                #MaHaKalyanam
-              </button>
-
-              {/* Desktop links */}
+              <button className="nav__logo" onClick={() => go('home')}>#MaHaKalyanam</button>
               <div className="nav__links">
-                {navLinks.map(link => (
-                  <button
-                    key={link.id}
-                    className={`nav__link ${activeSection === link.id ? 'nav__link--active' : ''}`}
-                    onClick={() => scrollTo(link.id)}
-                  >
-                    {link.label}
+                {navLinks.map(l => (
+                  <button key={l.id} className={`nav__link ${active === l.id ? 'nav__link--on' : ''}`} onClick={() => go(l.id)}>
+                    {l.label}
                   </button>
                 ))}
               </div>
-
-              {/* Mobile toggle */}
-              <button
-                className="nav__toggle"
-                onClick={() => setMobileOpen(!mobileOpen)}
-                aria-label="Toggle menu"
-              >
-                {mobileOpen ? <FiX /> : <FiMenu />}
+              <button className="nav__toggle" onClick={() => setMobileOpen(true)} aria-label="Menu">
+                <FiMenu />
               </button>
             </div>
           </motion.nav>
         )}
       </AnimatePresence>
 
-      {/* Mobile drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <>
-            <motion.div
-              className="nav__overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setMobileOpen(false)}
-            />
-            <motion.div
-              className="nav__drawer"
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            >
-              <div className="nav__drawer-header">
-                <span className="nav__drawer-title">#MaHaKalyanam</span>
-                <button
-                  className="nav__drawer-close"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <FiX />
-                </button>
+            <motion.div className="nav__overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileOpen(false)} />
+            <motion.div className="nav__drawer" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+              <div className="nav__drawer-top">
+                <span className="nav__drawer-logo">#MaHaKalyanam</span>
+                <button onClick={() => setMobileOpen(false)}><FiX size={24} /></button>
               </div>
               <div className="nav__drawer-links">
-                {navLinks.map((link, i) => (
-                  <motion.button
-                    key={link.id}
-                    className={`nav__drawer-link ${activeSection === link.id ? 'nav__drawer-link--active' : ''}`}
-                    onClick={() => scrollTo(link.id)}
-                    initial={{ opacity: 0, x: 30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 + i * 0.05 }}
+                {navLinks.map((l, i) => (
+                  <motion.button 
+                    key={l.id} 
+                    className={`nav__drawer-link ${active === l.id ? 'active' : ''}`} 
+                    onClick={() => go(l.id)} 
+                    initial={{ opacity: 0, x: 30 }} 
+                    animate={{ opacity: 1, x: 0 }} 
+                    transition={{ delay: 0.1 * i, duration: 0.4 }}
                   >
-                    {link.label}
+                    {l.label}
                   </motion.button>
                 ))}
               </div>
@@ -137,180 +89,84 @@ export default function Navigation() {
 
       <style>{`
         .nav {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
+          position: fixed; top: 0; left: 0; right: 0;
           z-index: var(--z-fixed);
-          background: rgba(45, 10, 18, 0.85);
+          background: rgba(var(--text-primary-rgb), 0.02);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(212, 168, 83, 0.1);
+          border-bottom: 1px solid var(--color-champagne);
         }
-
         .nav__inner {
           max-width: var(--container-max);
           margin: 0 auto;
-          padding: var(--space-md) var(--space-xl);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
+          padding: 20px 32px;
+          display: flex; align-items: center; justify-content: space-between;
         }
-
         .nav__logo {
           font-family: var(--font-cursive);
-          font-size: 1.4rem;
-          color: var(--color-gold);
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 0;
-          text-shadow: 0 0 10px rgba(212, 168, 83, 0.3);
+          font-size: 1.5rem;
+          font-weight: 400;
+          color: var(--color-gold-dark);
         }
-
-        .nav__links {
-          display: flex;
-          gap: var(--space-lg);
-        }
-
+        .nav__links { display: flex; gap: 40px; }
         .nav__link {
           font-family: var(--font-body);
-          font-size: 0.85rem;
-          font-weight: 500;
+          font-size: 0.75rem; font-weight: 500;
+          letter-spacing: 0.15em; text-transform: uppercase;
           color: var(--text-secondary);
-          background: none;
-          border: none;
-          cursor: pointer;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          padding: var(--space-xs) var(--space-sm);
           position: relative;
-          transition: color var(--transition-base);
+          transition: color 0.3s ease;
+          padding: 8px 0;
         }
-
         .nav__link::after {
-          content: '';
-          position: absolute;
-          bottom: -2px;
-          left: 50%;
-          width: 0;
-          height: 1px;
-          background: var(--color-gold);
-          transition: all var(--transition-base);
-          transform: translateX(-50%);
+          content: ''; position: absolute;
+          bottom: 0; left: 50%; transform: translateX(-50%); width: 0; height: 1.5px;
+          background: var(--color-burgundy); transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
         }
+        .nav__link:hover { color: var(--color-burgundy); }
+        .nav__link:hover::after { width: 100%; }
+        .nav__link--on { color: var(--color-burgundy); }
+        .nav__link--on::after { width: 100%; }
 
-        .nav__link:hover {
-          color: var(--text-primary);
-        }
-
-        .nav__link:hover::after {
-          width: 100%;
-        }
-
-        .nav__link--active {
-          color: var(--color-gold);
-        }
-
-        .nav__link--active::after {
-          width: 100%;
-        }
-
-        /* Mobile toggle */
-        .nav__toggle {
-          display: none;
-          font-size: 1.5rem;
-          color: var(--color-gold);
-          cursor: pointer;
-          background: none;
-          border: none;
-          padding: var(--space-xs);
-        }
-
-        /* Overlay */
-        .nav__overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.5);
-          z-index: calc(var(--z-fixed) + 1);
-        }
-
-        /* Drawer */
+        .nav__toggle { display: none; font-size: 1.5rem; color: var(--color-burgundy); }
+        .nav__overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.2); z-index: calc(var(--z-fixed)+1); backdrop-filter: blur(4px); }
+        
         .nav__drawer {
-          position: fixed;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          width: 280px;
-          background: var(--color-burgundy-deep);
-          border-left: 1px solid rgba(212, 168, 83, 0.15);
-          z-index: calc(var(--z-fixed) + 2);
-          display: flex;
-          flex-direction: column;
+          position: fixed; top: 0; right: 0; bottom: 0;
+          width: 320px; max-width: 100vw;
+          background: var(--color-ivory);
+          z-index: calc(var(--z-fixed)+2);
+          padding: 32px;
+          display: flex; flex-direction: column;
+          box-shadow: -20px 0 60px rgba(0,0,0,0.05);
         }
-
-        .nav__drawer-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: var(--space-xl);
-          border-bottom: 1px solid rgba(212, 168, 83, 0.1);
+        .nav__drawer-top {
+          display: flex; justify-content: space-between; align-items: center;
+          padding-bottom: 40px;
         }
-
-        .nav__drawer-title {
-          font-family: var(--font-cursive);
-          font-size: 1.3rem;
-          color: var(--color-gold);
-        }
-
-        .nav__drawer-close {
-          font-size: 1.3rem;
-          color: var(--text-secondary);
-          cursor: pointer;
-          background: none;
-          border: none;
-          padding: var(--space-xs);
-        }
-
+        .nav__drawer-logo { font-family: var(--font-cursive); font-size: 1.4rem; color: var(--color-gold-dark); }
+        .nav__drawer-top button { color: var(--color-burgundy); transition: transform 0.3s; }
+        .nav__drawer-top button:hover { transform: rotate(90deg); color: var(--color-burgundy-deep); }
+        
         .nav__drawer-links {
-          padding: var(--space-xl);
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-sm);
+          display: flex; flex-direction: column; gap: 24px;
+          margin-top: 20px;
         }
-
         .nav__drawer-link {
-          font-family: var(--font-heading);
-          font-size: 1.2rem;
-          font-weight: 500;
-          color: var(--text-secondary);
-          background: none;
-          border: none;
-          cursor: pointer;
-          text-align: left;
-          padding: var(--space-md);
-          border-radius: var(--radius-md);
-          transition: all var(--transition-base);
-          letter-spacing: 0.05em;
+          font-family: var(--font-heading); font-size: 2.2rem;
+          color: var(--text-tertiary); text-align: left;
+          transition: all 0.3s ease;
+          position: relative;
+          width: fit-content;
         }
-
-        .nav__drawer-link:hover {
-          background: rgba(212, 168, 83, 0.1);
-          color: var(--text-primary);
-        }
-
-        .nav__drawer-link--active {
-          color: var(--color-gold);
-          background: rgba(212, 168, 83, 0.08);
-        }
+        .nav__drawer-link:hover { color: var(--color-burgundy); transform: translateX(10px); }
+        .nav__drawer-link.active { color: var(--color-gold-dark); }
 
         @media (max-width: 768px) {
-          .nav__links {
-            display: none;
-          }
-          .nav__toggle {
-            display: flex;
-          }
+          .nav__inner { padding: 16px 24px; }
+          .nav__links { display: none; }
+          .nav__toggle { display: flex; }
+          .nav__drawer { padding: 24px; }
         }
       `}</style>
     </>

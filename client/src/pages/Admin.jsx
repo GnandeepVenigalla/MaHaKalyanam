@@ -158,9 +158,9 @@ function GuestListTab({ rsvps, onDelete, onRefresh }) {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
-                <th>Guests</th>
+                <th>Guests (Total)</th>
                 <th>Status</th>
-                <th>Dietary</th>
+                <th>Events Attending</th>
                 <th>Message</th>
                 <th>Date</th>
                 <th>Actions</th>
@@ -172,9 +172,17 @@ function GuestListTab({ rsvps, onDelete, onRefresh }) {
                   <td>{r.name}</td>
                   <td>{r.email || '—'}</td>
                   <td>{r.phone || '—'}</td>
-                  <td>{r.guests || 1}</td>
+                  <td>{r.numGuests || 0}</td>
                   <td><StatusBadge status={r.attending} /></td>
-                  <td>{r.dietary || '—'}</td>
+                  <td>
+                    {r.events && r.events.length > 0 ? (
+                      <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.8rem' }}>
+                        {r.events.map((ev, i) => (
+                          <li key={i}>{ev.eventName}: {ev.guests}</li>
+                        ))}
+                      </ul>
+                    ) : '—'}
+                  </td>
                   <td className="admin-td-msg">{r.message || '—'}</td>
                   <td>{r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}</td>
                   <td>
@@ -265,15 +273,15 @@ function ContentEditorTab({ content, onSave }) {
 /*  Events Editor Tab                                             */
 /* ═══════════════════════════════════════════════════════════════ */
 function EventsEditorTab({ events, onAdd, onDelete, onRefresh }) {
-  const [form, setForm] = useState({ name: '', date: '', time: '', venue: '', address: '', description: '' });
+  const [form, setForm] = useState({ name: '', subtitle: '', date: '', time: '', venue: '', address: '', description: '', guests_attending: '', icon: '', map_link: '', calendar_link: '' });
   const [adding, setAdding] = useState(false);
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!form.name) return;
+    if (!form.name || !form.date) return;
     setAdding(true);
     await onAdd(form);
-    setForm({ name: '', date: '', time: '', venue: '', address: '', description: '' });
+    setForm({ name: '', subtitle: '', date: '', time: '', venue: '', address: '', description: '', guests_attending: '', icon: '', map_link: '', calendar_link: '' });
     setAdding(false);
   };
 
@@ -289,11 +297,13 @@ function EventsEditorTab({ events, onAdd, onDelete, onRefresh }) {
         ) : (
           <div className="admin-cards-list">
             {events.map(ev => (
-              <div key={ev.id} className="admin-list-card">
+              <div key={ev.id || ev._id} className="admin-list-card">
                 <div className="admin-list-card__info">
-                  <strong>{ev.name}</strong>
+                  <strong>{ev.icon} {ev.name}</strong>
+                  <span style={{color: 'var(--color-gold-dark)'}}>{ev.subtitle}</span>
                   <span>{ev.date} {ev.time && `· ${ev.time}`}</span>
                   <span>{ev.venue}</span>
+                  <span style={{fontSize: '0.8rem', color: '#888'}}>{ev.guestsAttending}</span>
                 </div>
                 <button className="admin-icon-btn admin-icon-btn--danger" onClick={() => onDelete(ev._id || ev.id)}>
                   <FiTrash2 />
@@ -308,13 +318,20 @@ function EventsEditorTab({ events, onAdd, onDelete, onRefresh }) {
       <div className="admin-section">
         <h3 className="admin-section-title">Add New Event</h3>
         <form className="admin-inline-form" onSubmit={handleAdd}>
-          <input placeholder="Event Name *" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
-          <input placeholder="Date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} />
-          <input placeholder="Time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} />
-          <input placeholder="Venue" value={form.venue} onChange={e => setForm({...form, venue: e.target.value})} />
-          <input placeholder="Address" value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
-          <input placeholder="Description" value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
-          <button type="submit" className="admin-btn admin-btn--primary" disabled={adding}>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', width: '100%'}}>
+            <input placeholder="Event Name *" value={form.name} onChange={e => setForm({...form, name: e.target.value})} required />
+            <input placeholder="Subtitle (e.g. THE SACRED ENGAGEMENT)" value={form.subtitle} onChange={e => setForm({...form, subtitle: e.target.value})} />
+            <input placeholder="Date (e.g. June 19, 2026) *" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required />
+            <input placeholder="Time (e.g. 11:50 AM)" value={form.time} onChange={e => setForm({...form, time: e.target.value})} />
+            <input placeholder="Venue Name" value={form.venue} onChange={e => setForm({...form, venue: e.target.value})} />
+            <input placeholder="Full Address" value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
+            <input placeholder="Guests Attending (e.g. 74 GUESTS ATTENDING)" value={form.guests_attending} onChange={e => setForm({...form, guests_attending: e.target.value})} />
+            <input placeholder="Icon Emoji (e.g. 💍)" value={form.icon} onChange={e => setForm({...form, icon: e.target.value})} />
+            <input placeholder="Map Link URL" value={form.map_link} onChange={e => setForm({...form, map_link: e.target.value})} />
+            <input placeholder="Calendar Link URL" value={form.calendar_link} onChange={e => setForm({...form, calendar_link: e.target.value})} />
+            <input placeholder="Description" style={{gridColumn: '1 / -1'}} value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+          </div>
+          <button type="submit" className="admin-btn admin-btn--primary" disabled={adding} style={{marginTop: '16px'}}>
             <FiPlus /> {adding ? 'Adding...' : 'Add Event'}
           </button>
         </form>
@@ -524,6 +541,18 @@ function GiftsEditorTab({ gifts, onAdd, onDelete }) {
 /* ═══════════════════════════════════════════════════════════════ */
 const PRESET_THEMES = [
   {
+    name: 'Midnight Navy',
+    emoji: '🌌',
+    desc: 'Ultra-premium navy & champagne gold',
+    colors: {
+      theme_primary: '#0C1A3A', theme_primary_deep: '#060E22', theme_primary_light: '#1A3060',
+      theme_secondary: '#0A1530', theme_secondary_dark: '#040A18',
+      theme_accent: '#C9B87B', theme_accent_light: '#DED0A0', theme_accent_dark: '#A89858', theme_accent_pale: '#EDE4C4',
+      theme_text_primary: '#111111', theme_text_secondary: 'rgba(17,17,17,0.65)', theme_text_accent: '#A89858',
+      theme_neutral_1: '#E8E4D8', theme_neutral_2: '#FAFAFA', theme_neutral_3: '#F5F0E8',
+    },
+  },
+  {
     name: 'Royal Burgundy',
     emoji: '🍷',
     desc: 'Classic deep wine & gold',
@@ -531,7 +560,7 @@ const PRESET_THEMES = [
       theme_primary: '#4A0E1B', theme_primary_deep: '#2D0A12', theme_primary_light: '#6B1D30',
       theme_secondary: '#3A0B15', theme_secondary_dark: '#1A0509',
       theme_accent: '#D4A853', theme_accent_light: '#E8C87A', theme_accent_dark: '#B8922F', theme_accent_pale: '#F0D78C',
-      theme_text_primary: '#FFF8F0', theme_text_secondary: 'rgba(255,248,240,0.75)', theme_text_accent: '#D4A853',
+      theme_text_primary: '#2C1810', theme_text_secondary: 'rgba(44,24,16,0.65)', theme_text_accent: '#D4A853',
       theme_neutral_1: '#F5E6CC', theme_neutral_2: '#FFF8F0', theme_neutral_3: '#FDF5E8',
     },
   },
@@ -543,20 +572,8 @@ const PRESET_THEMES = [
       theme_primary: '#0B3D2E', theme_primary_deep: '#072419', theme_primary_light: '#14654E',
       theme_secondary: '#0A3426', theme_secondary_dark: '#041A13',
       theme_accent: '#C9A84C', theme_accent_light: '#DEC06E', theme_accent_dark: '#A88B30', theme_accent_pale: '#EDD88A',
-      theme_text_primary: '#F5FFF8', theme_text_secondary: 'rgba(245,255,248,0.75)', theme_text_accent: '#C9A84C',
+      theme_text_primary: '#162C24', theme_text_secondary: 'rgba(22,44,36,0.65)', theme_text_accent: '#C9A84C',
       theme_neutral_1: '#E8F0E4', theme_neutral_2: '#F5FFF8', theme_neutral_3: '#EAF5E6',
-    },
-  },
-  {
-    name: 'Royal Blue',
-    emoji: '💎',
-    desc: 'Regal navy & silver tones',
-    colors: {
-      theme_primary: '#0C1A3A', theme_primary_deep: '#060E22', theme_primary_light: '#1A3060',
-      theme_secondary: '#0A1530', theme_secondary_dark: '#040A18',
-      theme_accent: '#B8C5D9', theme_accent_light: '#D0DBE8', theme_accent_dark: '#8A9CB8', theme_accent_pale: '#E4ECF4',
-      theme_text_primary: '#F0F4FA', theme_text_secondary: 'rgba(240,244,250,0.75)', theme_text_accent: '#B8C5D9',
-      theme_neutral_1: '#D8E2EE', theme_neutral_2: '#F0F4FA', theme_neutral_3: '#E8EEF6',
     },
   },
   {
@@ -567,7 +584,7 @@ const PRESET_THEMES = [
       theme_primary: '#3D1225', theme_primary_deep: '#260B18', theme_primary_light: '#5C1E3A',
       theme_secondary: '#331020', theme_secondary_dark: '#1A080F',
       theme_accent: '#E8A0B0', theme_accent_light: '#F0BCC8', theme_accent_dark: '#C47888', theme_accent_pale: '#F8D8E0',
-      theme_text_primary: '#FFF5F7', theme_text_secondary: 'rgba(255,245,247,0.75)', theme_text_accent: '#E8A0B0',
+      theme_text_primary: '#2A1A20', theme_text_secondary: 'rgba(42,26,32,0.65)', theme_text_accent: '#E8A0B0',
       theme_neutral_1: '#F5E0E4', theme_neutral_2: '#FFF5F7', theme_neutral_3: '#FDEEF0',
     },
   },
@@ -579,7 +596,7 @@ const PRESET_THEMES = [
       theme_primary: '#1A1A1A', theme_primary_deep: '#0F0F0F', theme_primary_light: '#2D2D2D',
       theme_secondary: '#151515', theme_secondary_dark: '#0A0A0A',
       theme_accent: '#C9B87B', theme_accent_light: '#DED0A0', theme_accent_dark: '#A89858', theme_accent_pale: '#EDE4C4',
-      theme_text_primary: '#FAFAFA', theme_text_secondary: 'rgba(250,250,250,0.75)', theme_text_accent: '#C9B87B',
+      theme_text_primary: '#111111', theme_text_secondary: 'rgba(17,17,17,0.65)', theme_text_accent: '#C9B87B',
       theme_neutral_1: '#E8E4D8', theme_neutral_2: '#FAFAFA', theme_neutral_3: '#F5F0E8',
     },
   },
@@ -591,8 +608,8 @@ const PRESET_THEMES = [
       theme_primary: '#1A0A30', theme_primary_deep: '#10061E', theme_primary_light: '#2D1650',
       theme_secondary: '#150828', theme_secondary_dark: '#0A0414',
       theme_accent: '#C0A0E0', theme_accent_light: '#D4BCE8', theme_accent_dark: '#9878C0', theme_accent_pale: '#E8D8F0',
-      theme_text_primary: '#F8F0FF', theme_text_secondary: 'rgba(248,240,255,0.75)', theme_text_accent: '#C0A0E0',
-      theme_neutral_1: '#E4D8F0', theme_neutral_2: '#F8F0FF', theme_neutral_3: '#F0E8F8',
+      theme_text_primary: '#1A1028', theme_text_secondary: 'rgba(26,16,40,0.65)', theme_text_accent: '#C0A0E0',
+      theme_neutral_1: '#E4D8F0', theme_neutral_2: '#FDFBFF', theme_neutral_3: '#F0E8F8',
     },
   },
 ];

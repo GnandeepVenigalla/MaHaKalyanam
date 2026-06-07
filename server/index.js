@@ -4,7 +4,9 @@
 // ============================================================
 
 import dotenv from 'dotenv';
-dotenv.config();
+import { fileURLToPath as _ftu } from 'url';
+import { dirname as _dn, join as _jn } from 'path';
+dotenv.config({ path: _jn(_dn(_ftu(import.meta.url)), '.env') });
 
 import express from 'express';
 import cors from 'cors';

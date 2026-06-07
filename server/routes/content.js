@@ -75,7 +75,7 @@ router.get('/events', async (_req, res) => {
 // POST /api/events — add a new event (admin)
 router.post('/events', verifyToken, async (req, res) => {
   try {
-    const { name, date, time, venue, address, description, icon, sort_order } = req.body;
+    const { name, subtitle, date, time, venue, address, description, guests_attending, icon, map_link, calendar_link, sort_order } = req.body;
 
     if (!name || !date) {
       return res.status(400).json({
@@ -86,12 +86,16 @@ router.post('/events', verifyToken, async (req, res) => {
 
     const event = await Event.create({
       name,
+      subtitle: subtitle || null,
       date,
       time: time || null,
       venue: venue || null,
       address: address || null,
       description: description || null,
+      guestsAttending: guests_attending || null,
       icon: icon || null,
+      mapLink: map_link || null,
+      calendarLink: calendar_link || null,
       sortOrder: sort_order || 0,
     });
 
@@ -121,12 +125,16 @@ router.put('/events', verifyToken, async (req, res) => {
     for (const row of events) {
       await Event.findByIdAndUpdate(row._id || row.id, {
         name: row.name,
+        subtitle: row.subtitle || null,
         date: row.date,
         time: row.time || null,
         venue: row.venue || null,
         address: row.address || null,
         description: row.description || null,
+        guestsAttending: row.guests_attending || row.guestsAttending || null,
         icon: row.icon || null,
+        mapLink: row.map_link || row.mapLink || null,
+        calendarLink: row.calendar_link || row.calendarLink || null,
         sortOrder: row.sort_order ?? row.sortOrder ?? 0,
       });
     }

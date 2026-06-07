@@ -14,8 +14,7 @@ const router = Router();
 // ------------------------------------------------------------------
 router.post('/', async (req, res) => {
   try {
-    const { name, email, phone, num_guests, attending, dietary, message } =
-      req.body;
+    const { name, email, phone, events, dietary, message } = req.body;
 
     // Basic validation
     if (!name || !name.trim()) {
@@ -25,19 +24,26 @@ router.post('/', async (req, res) => {
       });
     }
 
-    if (!attending || !['yes', 'no', 'maybe'].includes(attending)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Attending status must be one of: yes, no, maybe.',
+    let totalGuests = 0;
+    let attendingEvents = [];
+    if (events && Array.isArray(events)) {
+      events.forEach(ev => {
+        if (ev.guests > 0) {
+          totalGuests += ev.guests;
+          attendingEvents.push(ev);
+        }
       });
     }
+
+    const attending = totalGuests > 0 ? 'yes' : 'no';
 
     const rsvp = await RsvpResponse.create({
       name: name.trim(),
       email: email?.trim() || null,
       phone: phone?.trim() || null,
-      numGuests: parseInt(num_guests, 10) || 1,
+      numGuests: totalGuests,
       attending,
+      events: attendingEvents,
       dietary: dietary?.trim() || null,
       message: message?.trim() || null,
     });

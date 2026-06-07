@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSiteData } from '../context/SiteContext';
 
-const WEDDING_DATE = new Date('2026-06-24T09:00:00');
-
-function getTimeLeft() {
+function getTimeLeft(weddingDate) {
   const now = new Date();
-  const diff = WEDDING_DATE - now;
+  const diff = weddingDate - now;
   if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
   return {
     days: Math.floor(diff / (1000 * 60 * 60 * 24)),
@@ -17,7 +16,7 @@ function getTimeLeft() {
 
 function CountdownBox({ value, label }) {
   return (
-    <div className="countdown__box glass-card gold-border">
+    <div className="countdown__box">
       <AnimatePresence mode="popLayout">
         <motion.span
           key={value}
@@ -36,12 +35,20 @@ function CountdownBox({ value, label }) {
 }
 
 export default function Countdown() {
-  const [timeLeft, setTimeLeft] = useState(getTimeLeft);
+  const { content } = useSiteData();
+
+  // Parse wedding_date from context; fall back to a default if not available
+  const weddingDateStr = content.wedding_date;
+  const weddingDate = weddingDateStr
+    ? new Date(weddingDateStr + 'T09:00:00')
+    : new Date('2026-06-24T09:00:00');
+
+  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(weddingDate));
 
   useEffect(() => {
-    const timer = setInterval(() => setTimeLeft(getTimeLeft()), 1000);
+    const timer = setInterval(() => setTimeLeft(getTimeLeft(weddingDate)), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [weddingDate.getTime()]);
 
   return (
     <section className="countdown section" id="countdown">
@@ -63,7 +70,7 @@ export default function Countdown() {
 
       <style>{`
         .countdown {
-          background: var(--color-burgundy-deep);
+          background: var(--color-cream);
         }
 
         .countdown__grid {
@@ -83,23 +90,31 @@ export default function Countdown() {
           padding: var(--space-lg);
           text-align: center;
           overflow: hidden;
+          background: #ffffff;
+          border: 1px solid rgba(var(--color-accent-rgb), 0.1);
+          border-radius: var(--radius-lg);
+          box-shadow: var(--shadow-sm);
+          transition: box-shadow var(--transition-base);
+        }
+
+        .countdown__box:hover {
+          box-shadow: var(--shadow-md);
         }
 
         .countdown__number {
           font-family: var(--font-display);
           font-size: 3rem;
           font-weight: 700;
-          color: var(--color-gold);
+          color: var(--color-burgundy);
           line-height: 1;
           display: block;
-          text-shadow: 0 0 20px rgba(212, 168, 83, 0.3);
         }
 
         .countdown__label {
           font-family: var(--font-body);
           font-size: 0.75rem;
           font-weight: 500;
-          color: var(--text-secondary);
+          color: var(--text-tertiary);
           text-transform: uppercase;
           letter-spacing: 0.2em;
           margin-top: var(--space-sm);

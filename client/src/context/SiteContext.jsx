@@ -36,36 +36,85 @@ function applyThemeColors(theme) {
   const root = document.documentElement;
 
   // Apply direct CSS variable overrides
+  // SKIP text colors and neutrals — those are designed for the light template
+  // and the stored theme may have dark-mode values that break contrast
+  const SKIP_KEYS = new Set([
+    'theme_text_primary', 'theme_text_secondary', 'theme_text_accent',
+    'theme_neutral_1', 'theme_neutral_2', 'theme_neutral_3',
+  ]);
   Object.entries(THEME_CSS_MAP).forEach(([dbKey, cssVar]) => {
-    if (theme[dbKey]) {
+    if (theme[dbKey] && !SKIP_KEYS.has(dbKey)) {
       root.style.setProperty(cssVar, theme[dbKey]);
     }
   });
 
-  // Auto-compute gradients from primary and accent colors
+  // ─── Auto-compute RGB triplets for rgba() usage ───
+  // This is the KEY fix: components use rgba(var(--color-accent-rgb), 0.1)
+  // instead of hardcoded rgba(212, 168, 83, 0.1)
   const primary = theme.theme_primary || '#4A0E1B';
   const primaryDeep = theme.theme_primary_deep || '#2D0A12';
   const primaryLight = theme.theme_primary_light || '#6B1D30';
+  const secondary = theme.theme_secondary || '#3A0B15';
   const secondaryDark = theme.theme_secondary_dark || '#1A0509';
   const accent = theme.theme_accent || '#D4A853';
   const accentLight = theme.theme_accent_light || '#E8C87A';
   const accentDark = theme.theme_accent_dark || '#B8922F';
   const accentPale = theme.theme_accent_pale || '#F0D78C';
+  const textPrimary = theme.theme_text_primary || '#2C1810';
 
-  root.style.setProperty('--gradient-gold', `linear-gradient(135deg, ${accent} 0%, ${accentPale} 25%, ${accent} 50%, ${accentDark} 75%, ${accent} 100%)`);
-  root.style.setProperty('--gradient-gold-subtle', `linear-gradient(135deg, ${accent}1a 0%, ${accent}0d 100%)`);
-  root.style.setProperty('--gradient-burgundy', `linear-gradient(180deg, ${primary} 0%, ${primaryDeep} 100%)`);
-  root.style.setProperty('--gradient-hero', `radial-gradient(ellipse at center top, ${primaryLight} 0%, ${primary} 35%, ${primaryDeep} 70%, ${secondaryDark} 100%)`);
-  root.style.setProperty('--gradient-section', `linear-gradient(180deg, ${primaryDeep} 0%, ${theme.theme_secondary || '#3A0B15'} 50%, ${primaryDeep} 100%)`);
+  // Compute RGB triplets for ALL key colors
+  const rgbMap = {
+    '--color-primary-rgb': primary,
+    '--color-primary-deep-rgb': primaryDeep,
+    '--color-primary-light-rgb': primaryLight,
+    '--color-secondary-rgb': secondary,
+    '--color-secondary-dark-rgb': secondaryDark,
+    '--color-accent-rgb': accent,
+    '--color-accent-light-rgb': accentLight,
+    '--color-accent-dark-rgb': accentDark,
+  };
 
-  // Accent-derived shadows
-  const rgb = hexToRgb(accent);
-  if (rgb) {
-    root.style.setProperty('--shadow-gold', `0 0 20px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.15), 0 0 40px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`);
-    root.style.setProperty('--shadow-glow', `0 0 30px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3), 0 0 60px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.1)`);
+  Object.entries(rgbMap).forEach(([cssVar, hex]) => {
+    const rgb = hexToRgb(hex);
+    if (rgb) {
+      root.style.setProperty(cssVar, `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+    }
+  });
+
+  // Text primary RGB for opacity variants
+  const textRgb = hexToRgb(textPrimary);
+  if (textRgb) {
+    root.style.setProperty('--text-primary-rgb', `${textRgb.r}, ${textRgb.g}, ${textRgb.b}`);
+    root.style.setProperty('--text-secondary', `rgba(${textRgb.r}, ${textRgb.g}, ${textRgb.b}, 0.65)`);
+    root.style.setProperty('--text-tertiary', `rgba(${textRgb.r}, ${textRgb.g}, ${textRgb.b}, 0.45)`);
   }
 
-  // Text on gold (dark version of accent for contrast)
+  // Neutrals
+  const neutral1 = theme.theme_neutral_1 || '#F5E6CC';
+  const neutral2 = theme.theme_neutral_2 || '#FFF8F0';
+  const neutral3 = theme.theme_neutral_3 || '#FBF7F2';
+
+  // ─── Auto-compute gradients — LIGHT theme ───
+  root.style.setProperty('--gradient-gold', `linear-gradient(135deg, ${accent} 0%, ${accentLight} 50%, ${accent} 100%)`);
+  root.style.setProperty('--gradient-gold-subtle', `linear-gradient(135deg, ${accent}14 0%, ${accent}08 100%)`);
+  root.style.setProperty('--gradient-burgundy', `linear-gradient(180deg, ${primary} 0%, ${primaryDeep} 100%)`);
+  // Hero & sections use LIGHT backgrounds
+  root.style.setProperty('--gradient-hero', `linear-gradient(180deg, ${neutral2} 0%, ${neutral3} 50%, ${neutral2} 100%)`);
+  root.style.setProperty('--gradient-section', `linear-gradient(180deg, ${neutral3} 0%, ${neutral2} 50%, ${neutral3} 100%)`);
+
+  // Glass gradient using text primary RGB
+  if (textRgb) {
+    root.style.setProperty('--gradient-glass', `linear-gradient(135deg, rgba(${textRgb.r}, ${textRgb.g}, ${textRgb.b}, 0.03) 0%, rgba(${textRgb.r}, ${textRgb.g}, ${textRgb.b}, 0.01) 100%)`);
+  }
+
+  // ─── Accent-derived shadows ───
+  const accentRgb = hexToRgb(accent);
+  if (accentRgb) {
+    root.style.setProperty('--shadow-gold', `0 0 20px rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.15), 0 0 40px rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.08)`);
+    root.style.setProperty('--shadow-glow', `0 0 30px rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.3), 0 0 60px rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.1)`);
+  }
+
+  // Text on gold (dark version of primary for contrast)
   root.style.setProperty('--text-on-gold', primaryDeep);
 }
 
