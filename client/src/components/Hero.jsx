@@ -147,17 +147,16 @@ export default function Hero() {
         }
 
         .hero__name {
-          font-family: var(--font-display);
+          font-family: var(--font-heading, 'Cormorant Garamond', serif);
+          font-style: italic;
           font-size: clamp(4.5rem, 12vw, 8rem);
           font-weight: 400;
           line-height: 0.95;
           color: #1A1C1A; /* Very dark text */
-          letter-spacing: -0.03em;
         }
 
         .hero__ampersand-wrap {
-          margin: -10px 0;
-          height: 40px;
+          margin: 10px 0;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -165,10 +164,10 @@ export default function Hero() {
         }
 
         .hero__ampersand {
-          font-family: var(--font-cursive);
-          font-size: clamp(2.5rem, 5vw, 3.5rem);
+          font-family: var(--font-display, 'Fraunces', serif);
+          font-size: clamp(2rem, 4vw, 3rem);
           color: #C0A868; /* Gold */
-          font-weight: 300;
+          font-weight: 400;
         }
 
         .hero__date-box {

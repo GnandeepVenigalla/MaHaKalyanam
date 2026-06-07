@@ -17,7 +17,7 @@ export default function Footer() {
             : 'AUGUST 24, 2026'
           }
         </p>
-        <p className="footer__tag">{content.tagline || '#MaHaKalyanam'}</p>
+        <p className="footer__tag">#NIRA</p>
         <p className="footer__copy">{content.footer_message || 'Made with ♡ for a beautiful beginning'}</p>
       </div>
 

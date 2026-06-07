@@ -8,7 +8,6 @@ import EventDetails from '../components/EventDetails';
 import YouTubePlayer from '../components/YouTubePlayer';
 import RSVPForm from '../components/RSVPForm';
 import FamilyDetails from '../components/FamilyDetails';
-import GiftRegistry from '../components/GiftRegistry';
 import Footer from '../components/Footer';
 
 function HomeContent() {
@@ -44,8 +43,6 @@ function HomeContent() {
       <EventDetails />
       <FloralDivider />
       <YouTubePlayer />
-      <FloralDivider />
-      <GiftRegistry />
       <FloralDivider />
       <RSVPForm />
       <Footer />

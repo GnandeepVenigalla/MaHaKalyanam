@@ -37,7 +37,7 @@ export default function AdminLogin() {
           <FiLock />
         </div>
         <h1 className="admin-login__title">Admin Access</h1>
-        <p className="admin-login__subtitle">#MaHaKalyanam Dashboard</p>
+        <p className="admin-login__subtitle">#NIRA Dashboard</p>
 
         <form onSubmit={handleSubmit} className="admin-login__form">
           <div className="admin-login__input-wrapper">

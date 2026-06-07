@@ -5,7 +5,6 @@ import { FiMenu, FiX } from 'react-icons/fi';
 const navLinks = [
   { id: 'home', label: 'Home' },
   { id: 'events', label: 'Events' },
-  { id: 'gifts', label: 'Gifts' },
   { id: 'rsvp', label: 'RSVP' },
 ];
 
@@ -43,7 +42,7 @@ export default function Navigation() {
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="nav__inner">
-              <button className="nav__logo" onClick={() => go('home')}>#MaHaKalyanam</button>
+              <button className="nav__logo" onClick={() => go('home')}>#NIRA</button>
               <div className="nav__links">
                 {navLinks.map(l => (
                   <button key={l.id} className={`nav__link ${active === l.id ? 'nav__link--on' : ''}`} onClick={() => go(l.id)}>
@@ -65,7 +64,7 @@ export default function Navigation() {
             <motion.div className="nav__overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileOpen(false)} />
             <motion.div className="nav__drawer" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
               <div className="nav__drawer-top">
-                <span className="nav__drawer-logo">#MaHaKalyanam</span>
+                <span className="nav__drawer-logo">#NIRA</span>
                 <button onClick={() => setMobileOpen(false)}><FiX size={24} /></button>
               </div>
               <div className="nav__drawer-links">
@@ -103,9 +102,9 @@ export default function Navigation() {
           display: flex; align-items: center; justify-content: space-between;
         }
         .nav__logo {
-          font-family: var(--font-cursive);
+          font-family: var(--font-display, 'Fraunces', serif);
           font-size: 1.5rem;
-          font-weight: 400;
+          font-weight: 500;
           color: var(--color-gold-dark);
         }
         .nav__links { display: flex; gap: 40px; }
@@ -144,7 +143,7 @@ export default function Navigation() {
           display: flex; justify-content: space-between; align-items: center;
           padding-bottom: 40px;
         }
-        .nav__drawer-logo { font-family: var(--font-cursive); font-size: 1.4rem; color: var(--color-gold-dark); }
+        .nav__drawer-logo { font-family: var(--font-display, 'Fraunces', serif); font-size: 1.4rem; font-weight: 500; color: var(--color-gold-dark); }
         .nav__drawer-top button { color: var(--color-burgundy); transition: transform 0.3s; }
         .nav__drawer-top button:hover { transform: rotate(90deg); color: var(--color-burgundy-deep); }
         

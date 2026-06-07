@@ -10,7 +10,9 @@ function getHeaders(includeAuth = false) {
 }
 
 async function request(url, options = {}) {
-  const res = await fetch(`${BASE_URL}${url}`, options);
+  // Ensure we never cache API responses (crucial for Vercel edge/browser cache)
+  const fetchOptions = { cache: 'no-store', ...options };
+  const res = await fetch(`${BASE_URL}${url}`, fetchOptions);
   const json = await res.json().catch(() => null);
   if (!res.ok) {
     throw new Error(json?.message || json?.error || `Request failed: ${res.status}`);

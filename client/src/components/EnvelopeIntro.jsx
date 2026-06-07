@@ -102,7 +102,7 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
                   </button>
                 </div>
 
-                <p className="intro__hashtag">#MaHaKalyanam</p>
+                <p className="intro__hashtag">#NIRA</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -223,7 +223,8 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
             }
 
             .intro__names {
-              font-family: var(--font-cursive, 'Pinyon Script', cursive);
+              font-family: var(--font-heading, 'Cormorant Garamond', serif);
+              font-style: italic;
               font-size: clamp(3rem, 8vw, 5rem);
               font-weight: 400;
               color: var(--charcoal, #2C2C2C);
@@ -234,10 +235,11 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
             .intro__names span { display: block; }
             .intro__names em {
               display: block;
-              font-family: var(--font-heading, 'DM Serif Display', serif);
-              font-size: 0.25em;
+              font-family: var(--font-display, 'Fraunces', serif);
+              font-style: normal;
+              font-size: 0.5em;
               color: var(--copper, #B87D4B);
-              margin: 4px 0;
+              margin: 20px 0;
             }
 
             .intro__line {

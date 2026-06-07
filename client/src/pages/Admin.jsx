@@ -1071,7 +1071,7 @@ export default function Admin() {
       {/* Sidebar */}
       <aside className={`admin-sidebar ${sidebarOpen ? 'admin-sidebar--open' : ''}`}>
         <div className="admin-sidebar__header">
-          <h2 className="admin-sidebar__title">#MaHaKalyanam</h2>
+          <h2 className="admin-sidebar__title">#NIRA</h2>
           <span className="admin-sidebar__badge">Admin</span>
         </div>
 
