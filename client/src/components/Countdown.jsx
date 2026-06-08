@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSiteData } from '../context/SiteContext';
+import { useLanguage } from '../context/LanguageContext';
 
 function getTimeLeft(weddingDate) {
   const now = new Date();
@@ -36,6 +37,7 @@ function CountdownBox({ value, label }) {
 
 export default function Countdown() {
   const { content } = useSiteData();
+  const { t } = useLanguage();
 
   // Parse wedding_date from context; fall back to a default if not available
   const weddingDateStr = content.wedding_date;
@@ -54,17 +56,17 @@ export default function Countdown() {
     <section className="countdown section" id="countdown">
       <div className="section__container">
         <div className="section__header">
-          <h2 className="section__title">Counting Down To Our Special Day</h2>
+          <h2 className="section__title">{t('countdown.title')}</h2>
           <div className="section__ornament">
             <span className="section__ornament-dot" />
           </div>
         </div>
 
         <div className="countdown__grid">
-          <CountdownBox value={timeLeft.days} label="Days" />
-          <CountdownBox value={timeLeft.hours} label="Hours" />
-          <CountdownBox value={timeLeft.minutes} label="Minutes" />
-          <CountdownBox value={timeLeft.seconds} label="Seconds" />
+          <CountdownBox value={timeLeft.days} label={t('countdown.days')} />
+          <CountdownBox value={timeLeft.hours} label={t('countdown.hours')} />
+          <CountdownBox value={timeLeft.minutes} label={t('countdown.minutes')} />
+          <CountdownBox value={timeLeft.seconds} label={t('countdown.seconds')} />
         </div>
       </div>
 

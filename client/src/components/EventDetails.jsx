@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useSiteData } from '../context/SiteContext';
 import { FiMapPin, FiCalendar } from 'react-icons/fi';
+import { useLanguage } from '../context/LanguageContext';
 
 const defaultEvents = [
   {
@@ -40,6 +41,7 @@ const cardVariants = {
 
 export default function EventDetails() {
   const { events } = useSiteData();
+  const { t } = useLanguage();
   const displayEvents = events?.length > 0 ? events : defaultEvents;
 
   return (
@@ -52,7 +54,7 @@ export default function EventDetails() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <h2 className="events__main-title">Events</h2>
+          <h2 className="events__main-title">{t('events.title')}</h2>
         </motion.div>
 
         <div className="timeline">
@@ -91,23 +93,15 @@ export default function EventDetails() {
                       <span className="timeline__card-venue">{ev.venue}</span>
                       <span className="timeline__card-venue">{ev.address}</span>
                       
-                      {ev.guestsAttending ? (
-                        <div className="timeline__card-guests">
-                          <span className="timeline__card-star">✦</span> {ev.guestsAttending}
-                        </div>
-                      ) : ev.rsvpCount !== undefined ? (
-                        <div className="timeline__card-guests">
-                          <span className="timeline__card-star">✦</span> {ev.rsvpCount} GUESTS ATTENDING
-                        </div>
-                      ) : null}
+
                     </div>
 
                     <div className="timeline__card-actions">
                       <a href={ev.mapLink || '#'} target="_blank" rel="noopener noreferrer" className="timeline__btn">
-                        <FiMapPin /> VIEW MAPS
+                        <FiMapPin /> {t('events.viewMaps')}
                       </a>
                       <a href={ev.calendarLink || '#'} target="_blank" rel="noopener noreferrer" className="timeline__btn">
-                        <FiCalendar /> ADD TO CALENDAR
+                        <FiCalendar /> {t('events.addCalendar')}
                       </a>
                     </div>
                   </div>
@@ -154,7 +148,7 @@ export default function EventDetails() {
           font-size: clamp(3.5rem, 8vw, 6rem);
           color: var(--color-gold);
           text-align: center;
-          margin-bottom: 80px;
+          margin-bottom: 40px;
           font-weight: 300;
         }
 
@@ -382,13 +376,13 @@ export default function EventDetails() {
           }
 
           .timeline {
-            gap: 40px;
+            gap: 24px;
           }
 
           .timeline__row {
             flex-direction: column-reverse !important;
             align-items: center;
-            gap: 20px;
+            gap: 12px;
           }
 
           .timeline__card-wrapper,

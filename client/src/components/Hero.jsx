@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useSiteData } from '../context/SiteContext';
 import ScratchCard from './ScratchCard';
+import { useLanguage } from '../context/LanguageContext';
 
 function formatDateParts(dateStr) {
   if (!dateStr) return { day: '24', month: 'August', year: '2026', weekday: 'Monday' };
@@ -24,6 +25,7 @@ const fadeUp = (delay = 0, duration = 1.2) => ({
 
 export default function Hero() {
   const { content } = useSiteData();
+  const { t, language } = useLanguage();
   const dp = formatDateParts(content.wedding_date);
 
   return (
@@ -39,21 +41,25 @@ export default function Hero() {
           </div>
         </motion.div>
 
+        <motion.div className="hero__hashtag" {...fadeUp(0.25)}>
+          <span>#NIRA</span>
+        </motion.div>
+
         <motion.div className="hero__elders" {...fadeUp(0.3)}>
           <span className="hero__line"></span>
-          <span>WITH THE BLESSINGS OF ELDERS</span>
+          <span>{t('hero.blessings')}</span>
           <span className="hero__line"></span>
         </motion.div>
 
         <div className="hero__names-wrap">
           <motion.h1 className="hero__name" {...fadeUp(0.5)}>
-            {content.groom_name || 'Ranjith'}
+            {language === 'te' ? t('hero.groomName') : (content.groom_name || 'Ranjith')}
           </motion.h1>
           <motion.div className="hero__ampersand-wrap" {...fadeUp(0.8)}>
             <span className="hero__ampersand">&</span>
           </motion.div>
           <motion.h1 className="hero__name" {...fadeUp(0.7)}>
-            {content.bride_name || 'Nithya'}
+            {language === 'te' ? t('hero.brideName') : (content.bride_name || 'Nithya')}
           </motion.h1>
         </div>
 
@@ -114,6 +120,23 @@ export default function Hero() {
           line-height: 1.8;
           color: rgba(0, 0, 0, 0.65); /* Readable dark grey */
           text-align: center;
+        }
+
+        .hero__hashtag {
+          margin-bottom: 24px;
+        }
+
+        .hero__hashtag span {
+          font-family: var(--font-body);
+          font-size: 2rem;
+          font-weight: 800;
+          letter-spacing: 0.4em;
+          text-transform: uppercase;
+          background: linear-gradient(135deg, #D4AF37 0%, #F5E28B 35%, #D4AF37 55%, #B8941F 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.5));
         }
 
         .hero__elders {
@@ -207,12 +230,14 @@ export default function Hero() {
         }
 
         @media (max-width: 768px) {
+          .hero { padding: 60px 24px 40px; }
+          .hero__divine { margin-bottom: 30px; }
           .hero__date-pill { padding: 14px 32px; gap: 16px; }
           .hero__date-day { font-size: 0.65rem; }
           .hero__date-main { font-size: 1rem; }
-          .hero__elders { margin-bottom: 30px; }
-          .hero__ganesha { width: 50px; margin-bottom: 20px; }
-          .hero__names-wrap { margin-bottom: 40px; }
+          .hero__elders { margin-bottom: 20px; }
+          .hero__ganesha { width: 50px; margin-bottom: 16px; }
+          .hero__names-wrap { margin-bottom: 30px; }
         }
       `}</style>
     </section>

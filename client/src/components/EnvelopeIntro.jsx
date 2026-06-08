@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
+  const { language, setLanguage, t } = useLanguage();
   // States: idle -> closing -> flying -> transparent_pause -> expanding -> done
   const [animState, setAnimState] = useState('idle');
 
@@ -86,7 +88,7 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
                   <div className="intro__ganesh" />
 
                   <p className="intro__label">
-                    You are cordially invited to the wedding of
+                    {t('intro.invited')}
                   </p>
 
                   <h1 className="intro__names">
@@ -98,8 +100,24 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
                   <div className="intro__line" />
 
                   <button className="intro__btn" onClick={handleOpen}>
-                    Open Invitation
+                    {t('intro.open')}
                   </button>
+
+                  <div className="intro__lang-toggle">
+                    <button
+                      className={`intro__lang-btn ${language === 'en' ? 'intro__lang-btn--active' : ''}`}
+                      onClick={() => setLanguage('en')}
+                    >
+                      English
+                    </button>
+                    <span className="intro__lang-divider">|</span>
+                    <button
+                      className={`intro__lang-btn ${language === 'te' ? 'intro__lang-btn--active' : ''}`}
+                      onClick={() => setLanguage('te')}
+                    >
+                      తెలుగు
+                    </button>
+                  </div>
                 </div>
 
                 <p className="intro__hashtag">#NIRA</p>
@@ -264,6 +282,43 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
               transition: background 0.3s ease, transform 0.2s ease;
             }
             .intro__btn:hover { background: #454E41; transform: translateY(-2px); }
+
+            .intro__lang-toggle {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-top: 28px;
+            }
+
+            .intro__lang-btn {
+              font-family: var(--font-body, 'Sora', sans-serif);
+              font-size: 0.75rem;
+              font-weight: 500;
+              letter-spacing: 0.15em;
+              color: rgba(44, 44, 44, 0.4);
+              background: none;
+              border: none;
+              cursor: pointer;
+              padding: 6px 12px;
+              border-radius: 20px;
+              transition: all 0.3s ease;
+            }
+
+            .intro__lang-btn--active {
+              color: #5C6851;
+              background: rgba(92, 104, 81, 0.1);
+              font-weight: 600;
+            }
+
+            .intro__lang-btn:hover {
+              color: #5C6851;
+            }
+
+            .intro__lang-divider {
+              color: rgba(44, 44, 44, 0.2);
+              font-size: 0.8rem;
+              font-weight: 300;
+            }
 
             .intro__hashtag {
               position: absolute;

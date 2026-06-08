@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 const navLinks = [
-  { id: 'home', label: 'Home', path: '/' },
-  { id: 'events', label: 'Events', path: '/#events' },
-  { id: 'videos', label: 'Our Story', path: '/videos' },
-  { id: 'rsvp', label: 'RSVP', path: '/#rsvp' },
+  { id: 'home', label: 'nav.home', path: '/' },
+  { id: 'events', label: 'nav.events', path: '/#events' },
+  { id: 'videos', label: 'nav.ourStory', path: '/videos' },
+  { id: 'rsvp', label: 'nav.rsvp', path: '/#rsvp' },
 ];
 
 export default function Navigation() {
@@ -16,6 +17,7 @@ export default function Navigation() {
   const [active, setActive] = useState('home');
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const onScroll = () => {
@@ -75,7 +77,7 @@ export default function Navigation() {
               <div className="nav__links">
                 {navLinks.map(l => (
                   <button key={l.id} className={`nav__link ${active === l.id ? 'nav__link--on' : ''}`} onClick={() => go(l)}>
-                    {l.label}
+                    {t(l.label)}
                   </button>
                 ))}
               </div>
@@ -106,7 +108,7 @@ export default function Navigation() {
                     animate={{ opacity: 1, x: 0 }} 
                     transition={{ delay: 0.1 * i, duration: 0.4 }}
                   >
-                    {l.label}
+                    {t(l.label)}
                   </motion.button>
                 ))}
               </div>

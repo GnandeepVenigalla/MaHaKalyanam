@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SiteProvider, useSiteData } from '../context/SiteContext';
+import { LanguageProvider } from '../context/LanguageContext';
 import EnvelopeIntro from '../components/EnvelopeIntro';
 import Navigation from '../components/Navigation';
 import Hero from '../components/Hero';
@@ -49,8 +50,11 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <SiteProvider>
-      <HomeContent />
-    </SiteProvider>
+    <LanguageProvider>
+      <SiteProvider>
+        <HomeContent />
+      </SiteProvider>
+    </LanguageProvider>
   );
 }
+

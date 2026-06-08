@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { submitRSVP, fetchEvents } from '../utils/api';
 import { FiCheck, FiMinus, FiPlus } from 'react-icons/fi';
+import { useLanguage } from '../context/LanguageContext';
 
 const initialForm = {
   name: '',
@@ -17,6 +18,7 @@ export default function RSVPForm() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchEvents().then(data => {
@@ -48,7 +50,7 @@ export default function RSVPForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) { setError('Please enter your name'); return; }
+    if (!form.name.trim()) { setError(t('rsvp.errorName')); return; }
     
     const attendingEvents = events
       .filter(ev => {
@@ -81,9 +83,9 @@ export default function RSVPForm() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <span className="rsvp-label">✦ JOIN THE CELEBRATION ✦</span>
-          <h2 className="rsvp-title">We'd Love to See You</h2>
-          <p className="rsvp-subtitle">A few details to help us celebrate with you</p>
+          <span className="rsvp-label">{t('rsvp.label')}</span>
+          <h2 className="rsvp-title">{t('rsvp.title')}</h2>
+          <p className="rsvp-subtitle">{t('rsvp.subtitle')}</p>
         </motion.div>
 
         <div className="rsvp-wrapper">
@@ -96,8 +98,8 @@ export default function RSVPForm() {
                 animate={{ opacity: 1, scale: 1 }}
               >
                 <div className="rsvp-success-icon"><FiCheck /></div>
-                <h3 className="rsvp-success-title">Thank You!</h3>
-                <p className="rsvp-success-text">Your response has been recorded. We can't wait to celebrate with you.</p>
+                <h3 className="rsvp-success-title">{t('rsvp.thankYou')}</h3>
+                <p className="rsvp-success-text">{t('rsvp.successText')}</p>
                 <button className="btn btn--outline" onClick={() => { 
                   setSubmitted(false); 
                   setForm(initialForm); 
@@ -105,7 +107,7 @@ export default function RSVPForm() {
                   events.forEach(ev => { reset[ev._id || ev.id] = { adults: 0, kids: 0 }; }); 
                   setEventSelections(reset); 
                 }}>
-                  Submit Another
+                  {t('rsvp.submitAnother')}
                 </button>
               </motion.div>
             ) : (
@@ -119,18 +121,18 @@ export default function RSVPForm() {
               >
                 {/* GUEST DETAILS */}
                 <div className="rsvp-section-block">
-                  <h4 className="rsvp-section-title">✦ GUEST DETAILS</h4>
+                  <h4 className="rsvp-section-title">{t('rsvp.guestDetails')}</h4>
                   <div className="rsvp-inputs">
-                    <input type="text" name="name" className="rsvp-input-line" placeholder="Your Name *" value={form.name} onChange={handleChange} required />
-                    <input type="tel" name="phone" className="rsvp-input-line" placeholder="Phone Number *" value={form.phone} onChange={handleChange} required />
-                    <input type="email" name="email" className="rsvp-input-line" placeholder="Email (for confirmation)" value={form.email} onChange={handleChange} />
+                    <input type="text" name="name" className="rsvp-input-line" placeholder={t('rsvp.namePlaceholder')} value={form.name} onChange={handleChange} required />
+                    <input type="tel" name="phone" className="rsvp-input-line" placeholder={t('rsvp.phonePlaceholder')} value={form.phone} onChange={handleChange} required />
+                    <input type="email" name="email" className="rsvp-input-line" placeholder={t('rsvp.emailPlaceholder')} value={form.email} onChange={handleChange} />
                   </div>
                 </div>
 
                 {/* WHICH EVENTS */}
                 <div className="rsvp-section-block">
-                  <h4 className="rsvp-section-title">✦ WHICH EVENTS?</h4>
-                  <p className="rsvp-hint">Tap + to join an event</p>
+                  <h4 className="rsvp-section-title">{t('rsvp.whichEvents')}</h4>
+                  <p className="rsvp-hint">{t('rsvp.tapHint')}</p>
                   
                   <div className="rsvp-events-list">
                     {events.map((ev) => {
@@ -148,7 +150,7 @@ export default function RSVPForm() {
                           
                           <div className="rsvp-event-counters-wrap">
                             <div className="rsvp-event-counter-row">
-                              <span className="rsvp-counter-label">Adults</span>
+                              <span className="rsvp-counter-label">{t('rsvp.adults')}</span>
                               <div className="rsvp-event-controls">
                                 <button type="button" className="rsvp-ctrl-btn" onClick={() => adjustEventGuests(id, 'adults', -1)} disabled={sel.adults === 0}><FiMinus /></button>
                                 <span className="rsvp-ctrl-val">{sel.adults}</span>
@@ -156,7 +158,7 @@ export default function RSVPForm() {
                               </div>
                             </div>
                             <div className="rsvp-event-counter-row">
-                              <span className="rsvp-counter-label">Kids</span>
+                              <span className="rsvp-counter-label">{t('rsvp.kids')}</span>
                               <div className="rsvp-event-controls">
                                 <button type="button" className="rsvp-ctrl-btn" onClick={() => adjustEventGuests(id, 'kids', -1)} disabled={sel.kids === 0}><FiMinus /></button>
                                 <span className="rsvp-ctrl-val">{sel.kids}</span>
@@ -172,14 +174,14 @@ export default function RSVPForm() {
 
                 {/* OPTIONAL MESSAGE */}
                 <div className="rsvp-section-block">
-                  <input type="text" name="message" className="rsvp-input-line" placeholder="Message for the couple (Optional)" value={form.message} onChange={handleChange} />
+                  <input type="text" name="message" className="rsvp-input-line" placeholder={t('rsvp.messagePlaceholder')} value={form.message} onChange={handleChange} />
                 </div>
 
                 {error && <div className="rsvp-error">{error}</div>}
 
                 <div className="rsvp-submit-wrap">
                   <button type="submit" className="btn btn--gold rsvp-submit" disabled={submitting}>
-                    {submitting ? 'Sending...' : 'Send RSVP'}
+                    {submitting ? t('rsvp.sending') : t('rsvp.send')}
                   </button>
                 </div>
               </motion.form>

@@ -1,10 +1,12 @@
 import React from 'react';
 import { useSiteData } from '../context/SiteContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Footer() {
   const { content } = useSiteData();
-  const groom = content.groom_name || 'Ranjith';
-  const bride = content.bride_name || 'Nithya';
+  const { t, language } = useLanguage();
+  const groom = language === 'te' ? t('hero.groomName') : (content.groom_name || 'Ranjith');
+  const bride = language === 'te' ? t('hero.brideName') : (content.bride_name || 'Nithya');
 
   return (
     <footer className="footer">
@@ -18,7 +20,7 @@ export default function Footer() {
           }
         </p>
         <p className="footer__tag">#NIRA</p>
-        <p className="footer__copy">{content.footer_message || 'Made with ♡ for a beautiful beginning'}</p>
+        <p className="footer__copy">{content.footer_message || t('footer.madeWith')}</p>
         <p className="footer__copyright">&copy; {new Date().getFullYear()} GD Enterprises. All Rights Reserved.</p>
       </div>
 

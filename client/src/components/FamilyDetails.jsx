@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { useSiteData } from '../context/SiteContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const WeddingKnot = () => (
   <svg viewBox="0 0 64 64" width="56" height="56" fill="none" stroke="var(--color-gold-dark, #A89858)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -15,11 +16,12 @@ const WeddingKnot = () => (
 export default function FamilyDetails() {
   const { content } = useSiteData();
   const ref = useRef(null);
+  const { t, language } = useLanguage();
   const inView = useInView(ref, { once: true, margin: '-80px' });
 
-  const brideParents = content.bride_parents || "Venkata Ramana & Revathi";
-  const groomParents = content.groom_parents || "Siva Gajapathi Raju & Kalpana";
-  const welcomeMessage = content.welcome_message || "With the blessings of our elders and the warmth of two families coming together, we joyfully invite you to celebrate our wedding";
+  const brideParents = language === 'te' ? t('family.brideParents') : (content.bride_parents || "Venkata Ramana & Revathi");
+  const groomParents = language === 'te' ? t('family.groomParents') : (content.groom_parents || "Siva Gajapathi Raju & Kalpana");
+  const welcomeMessage = language === 'te' ? t('family.welcome') : (content.welcome_message || t('family.welcome'));
 
   return (
     <section className="fam" id="family" ref={ref}>
@@ -38,7 +40,7 @@ export default function FamilyDetails() {
           animate={inView ? { opacity: 1, y: 0 } : {}} 
           transition={{ duration: 0.7 }}
         >
-          <span className="fam__label">✦ TOGETHER WITH OUR FAMILIES ✦</span>
+          <span className="fam__label">{t('family.together')}</span>
           
           <div className="fam__invite-text">
             {welcomeMessage.split('\\n').map((line, i) => (
@@ -57,8 +59,8 @@ export default function FamilyDetails() {
             animate={inView ? { opacity: 1, y: 0 } : {}} 
             transition={{ duration: 0.7, ease: [0.22,1,0.36,1], delay: 0.2 }}
           >
-            <h3 className="fam__name">{content.groom_name || 'Harsha'}</h3>
-            <p className="fam__role">SON OF</p>
+            <h3 className="fam__name">{language === 'te' ? t('family.groomName') : (content.groom_name || 'Harsha')}</h3>
+            <p className="fam__role">{t('family.sonOf')}</p>
             <p className="fam__parents">{groomParents}</p>
           </motion.div>
 
@@ -77,8 +79,8 @@ export default function FamilyDetails() {
             animate={inView ? { opacity: 1, y: 0 } : {}} 
             transition={{ duration: 0.7, ease: [0.22,1,0.36,1], delay: 0.4 }}
           >
-            <h3 className="fam__name">{content.bride_name || 'Manasa'}</h3>
-            <p className="fam__role">DAUGHTER OF</p>
+            <h3 className="fam__name">{language === 'te' ? t('family.brideName') : (content.bride_name || 'Manasa')}</h3>
+            <p className="fam__role">{t('family.daughterOf')}</p>
             <p className="fam__parents">{brideParents}</p>
           </motion.div>
         </div>
@@ -207,7 +209,9 @@ export default function FamilyDetails() {
 
         @media (max-width: 768px) {
           .fam__grid { grid-template-columns: 1fr; gap: 20px; }
-          .fam__center { order: -1; margin-bottom: 10px; }
+          .fam__grid .fam__card:first-child { order: -1; }
+          .fam__center { order: 0; margin: 10px 0; justify-self: center; display: flex; justify-content: center; width: 100%; }
+          .fam__grid .fam__card:last-child { order: 1; }
           .fam__card { padding: 40px 20px; }
           .fam__name { font-size: 2.8rem; }
           .fam__invite-text { font-size: 1.1rem; }
