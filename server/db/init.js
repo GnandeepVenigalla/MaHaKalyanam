@@ -46,7 +46,8 @@ const rsvpResponseSchema = new mongoose.Schema({
     {
       eventId: String,
       eventName: String,
-      guests: Number
+      adults: { type: Number, default: 0 },
+      kids: { type: Number, default: 0 }
     }
   ],
   dietary:   { type: String },

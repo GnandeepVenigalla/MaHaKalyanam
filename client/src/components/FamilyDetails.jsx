@@ -2,6 +2,16 @@ import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { useSiteData } from '../context/SiteContext';
 
+const WeddingKnot = () => (
+  <svg viewBox="0 0 64 64" width="56" height="56" fill="none" stroke="var(--color-gold-dark, #A89858)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M 32 32 C 10 10, 10 54, 32 32 C 54 10, 54 54, 32 32 Z" />
+    <circle cx="32" cy="32" r="5" fill="var(--color-ivory, #FAFAFA)" />
+    <circle cx="32" cy="32" r="2" fill="var(--color-gold-dark, #A89858)" />
+    <path d="M 30 36 C 28 45, 24 50, 20 54" />
+    <path d="M 34 36 C 36 45, 40 50, 44 54" />
+  </svg>
+);
+
 export default function FamilyDetails() {
   const { content } = useSiteData();
   const ref = useRef(null);
@@ -58,7 +68,7 @@ export default function FamilyDetails() {
             animate={inView ? { opacity: 1, scale: 1 } : {}} 
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            💍
+            <WeddingKnot />
           </motion.div>
 
           <motion.div 

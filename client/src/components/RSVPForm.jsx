@@ -23,7 +23,7 @@ export default function RSVPForm() {
       if (data && Array.isArray(data)) {
         setEvents(data);
         const initSelections = {};
-        data.forEach(ev => { initSelections[ev._id || ev.id] = 0; });
+        data.forEach(ev => { initSelections[ev._id || ev.id] = { adults: 0, kids: 0 }; });
         setEventSelections(initSelections);
       }
     }).catch(console.error);
@@ -35,11 +35,15 @@ export default function RSVPForm() {
     setError('');
   };
 
-  const adjustEventGuests = (eventId, delta) => {
-    setEventSelections(prev => ({
-      ...prev,
-      [eventId]: Math.max(0, Math.min(10, (prev[eventId] || 0) + delta))
-    }));
+  const adjustEventGuests = (eventId, type, delta) => {
+    setEventSelections(prev => {
+      const current = prev[eventId] || { adults: 0, kids: 0 };
+      const newValue = Math.max(0, Math.min(10, current[type] + delta));
+      return {
+        ...prev,
+        [eventId]: { ...current, [type]: newValue }
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -47,8 +51,14 @@ export default function RSVPForm() {
     if (!form.name.trim()) { setError('Please enter your name'); return; }
     
     const attendingEvents = events
-      .filter(ev => eventSelections[ev._id || ev.id] > 0)
-      .map(ev => ({ eventId: ev._id || ev.id, eventName: ev.name, guests: eventSelections[ev._id || ev.id] }));
+      .filter(ev => {
+        const sel = eventSelections[ev._id || ev.id];
+        return sel && (sel.adults > 0 || sel.kids > 0);
+      })
+      .map(ev => {
+        const sel = eventSelections[ev._id || ev.id];
+        return { eventId: ev._id || ev.id, eventName: ev.name, adults: sel.adults, kids: sel.kids };
+      });
 
     try {
       setSubmitting(true);
@@ -92,7 +102,7 @@ export default function RSVPForm() {
                   setSubmitted(false); 
                   setForm(initialForm); 
                   const reset = {}; 
-                  events.forEach(ev => { reset[ev._id || ev.id] = 0; }); 
+                  events.forEach(ev => { reset[ev._id || ev.id] = { adults: 0, kids: 0 }; }); 
                   setEventSelections(reset); 
                 }}>
                   Submit Another
@@ -125,8 +135,8 @@ export default function RSVPForm() {
                   <div className="rsvp-events-list">
                     {events.map((ev) => {
                       const id = ev._id || ev.id;
-                      const count = eventSelections[id] || 0;
-                      const isActive = count > 0;
+                      const sel = eventSelections[id] || { adults: 0, kids: 0 };
+                      const isActive = sel.adults > 0 || sel.kids > 0;
 
                       return (
                         <div key={id} className={`rsvp-event-card ${isActive ? 'active' : ''}`}>
@@ -136,10 +146,23 @@ export default function RSVPForm() {
                           </div>
                           <div className="rsvp-event-icon">{ev.icon}</div>
                           
-                          <div className="rsvp-event-controls">
-                            <button type="button" className="rsvp-ctrl-btn" onClick={() => adjustEventGuests(id, -1)} disabled={count === 0}><FiMinus /></button>
-                            <span className="rsvp-ctrl-val">{isActive ? `✓ ${count} GUESTS` : 'NOT ATTENDING'}</span>
-                            <button type="button" className="rsvp-ctrl-btn" onClick={() => adjustEventGuests(id, 1)} disabled={count >= 10}><FiPlus /></button>
+                          <div className="rsvp-event-counters-wrap">
+                            <div className="rsvp-event-counter-row">
+                              <span className="rsvp-counter-label">Adults</span>
+                              <div className="rsvp-event-controls">
+                                <button type="button" className="rsvp-ctrl-btn" onClick={() => adjustEventGuests(id, 'adults', -1)} disabled={sel.adults === 0}><FiMinus /></button>
+                                <span className="rsvp-ctrl-val">{sel.adults}</span>
+                                <button type="button" className="rsvp-ctrl-btn" onClick={() => adjustEventGuests(id, 'adults', 1)} disabled={sel.adults >= 10}><FiPlus /></button>
+                              </div>
+                            </div>
+                            <div className="rsvp-event-counter-row">
+                              <span className="rsvp-counter-label">Kids</span>
+                              <div className="rsvp-event-controls">
+                                <button type="button" className="rsvp-ctrl-btn" onClick={() => adjustEventGuests(id, 'kids', -1)} disabled={sel.kids === 0}><FiMinus /></button>
+                                <span className="rsvp-ctrl-val">{sel.kids}</span>
+                                <button type="button" className="rsvp-ctrl-btn" onClick={() => adjustEventGuests(id, 'kids', 1)} disabled={sel.kids >= 10}><FiPlus /></button>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       );
@@ -300,14 +323,37 @@ export default function RSVPForm() {
           opacity: 0.8;
         }
 
-        .rsvp-event-controls {
+        .rsvp-event-counters-wrap {
+          border-top: 1px solid rgba(0,0,0,0.1);
+          padding-top: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .rsvp-event-card.active .rsvp-event-counters-wrap { border-top-color: rgba(255,255,255,0.15); }
+
+        .rsvp-event-counter-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-top: 1px solid rgba(0,0,0,0.1);
-          padding-top: 24px;
         }
-        .rsvp-event-card.active .rsvp-event-controls { border-top-color: rgba(255,255,255,0.15); }
+
+        .rsvp-counter-label {
+          font-family: var(--font-body);
+          font-size: 0.8rem;
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #1A1A1A;
+          opacity: 0.7;
+        }
+        .rsvp-event-card.active .rsvp-counter-label { color: #FFFFFF; opacity: 0.8; }
+
+        .rsvp-event-controls {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
 
         .rsvp-ctrl-btn {
           width: 44px; height: 44px;
@@ -325,13 +371,15 @@ export default function RSVPForm() {
 
         .rsvp-ctrl-val {
           font-family: var(--font-body);
-          font-size: 0.75rem;
+          font-size: 0.85rem;
           font-weight: 600;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          color: var(--text-tertiary);
+          letter-spacing: 0.1em;
+          color: #1A1A1A;
+          opacity: 0.8;
+          min-width: 24px;
+          text-align: center;
         }
-        .rsvp-event-card.active .rsvp-ctrl-val { color: var(--color-ivory); }
+        .rsvp-event-card.active .rsvp-ctrl-val { color: #FFFFFF; opacity: 1; }
 
         .rsvp-submit-wrap { text-align: center; margin-top: 60px; display: flex; justify-content: center; }
         .rsvp-submit { 

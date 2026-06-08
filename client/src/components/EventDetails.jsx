@@ -91,11 +91,15 @@ export default function EventDetails() {
                       <span className="timeline__card-venue">{ev.venue}</span>
                       <span className="timeline__card-venue">{ev.address}</span>
                       
-                      {ev.guestsAttending && (
+                      {ev.guestsAttending ? (
                         <div className="timeline__card-guests">
                           <span className="timeline__card-star">✦</span> {ev.guestsAttending}
                         </div>
-                      )}
+                      ) : ev.rsvpCount !== undefined ? (
+                        <div className="timeline__card-guests">
+                          <span className="timeline__card-star">✦</span> {ev.rsvpCount} GUESTS ATTENDING
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="timeline__card-actions">
@@ -344,14 +348,15 @@ export default function EventDetails() {
           font-size: clamp(5rem, 10vw, 8rem);
           font-style: italic;
           color: var(--color-gold);
-          line-height: 0.9;
+          line-height: 1;
+          font-variant-numeric: lining-nums;
         }
 
         .timeline__date-sub {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-top: -10px;
+          margin-top: 16px;
         }
         
         .timeline__row--right .timeline__date-sub { flex-direction: row-reverse; }

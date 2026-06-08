@@ -28,9 +28,16 @@ router.post('/', async (req, res) => {
     let attendingEvents = [];
     if (events && Array.isArray(events)) {
       events.forEach(ev => {
-        if (ev.guests > 0) {
-          totalGuests += ev.guests;
-          attendingEvents.push(ev);
+        const adults = parseInt(ev.adults) || 0;
+        const kids = parseInt(ev.kids) || 0;
+        if (adults > 0 || kids > 0) {
+          totalGuests += (adults + kids);
+          attendingEvents.push({
+            eventId: ev.eventId,
+            eventName: ev.eventName,
+            adults,
+            kids
+          });
         }
       });
     }

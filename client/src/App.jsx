@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
+import Videos from './pages/Videos';
 import AdminLogin from './pages/AdminLogin';
 import Admin from './pages/Admin';
 
@@ -17,6 +18,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/videos" element={<Videos />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin"

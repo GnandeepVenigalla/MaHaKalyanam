@@ -19,6 +19,7 @@ export default function Footer() {
         </p>
         <p className="footer__tag">#NIRA</p>
         <p className="footer__copy">{content.footer_message || 'Made with ♡ for a beautiful beginning'}</p>
+        <p className="footer__copyright">&copy; {new Date().getFullYear()} GD Enterprises. All Rights Reserved.</p>
       </div>
 
       <style>{`
@@ -72,6 +73,13 @@ export default function Footer() {
           font-family: var(--font-body);
           font-size: 0.75rem;
           color: rgba(255, 255, 255, 0.4);
+        }
+        .footer__copyright {
+          font-family: var(--font-body);
+          font-size: 0.7rem;
+          color: rgba(255, 255, 255, 0.3);
+          margin-top: 12px;
+          letter-spacing: 0.1em;
         }
 
         @media (max-width: 768px) {

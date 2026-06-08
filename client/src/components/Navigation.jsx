@@ -1,34 +1,63 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMenu, FiX } from 'react-icons/fi';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const navLinks = [
-  { id: 'home', label: 'Home' },
-  { id: 'events', label: 'Events' },
-  { id: 'rsvp', label: 'RSVP' },
+  { id: 'home', label: 'Home', path: '/' },
+  { id: 'events', label: 'Events', path: '/#events' },
+  { id: 'videos', label: 'Our Story', path: '/videos' },
+  { id: 'rsvp', label: 'RSVP', path: '/#rsvp' },
 ];
 
 export default function Navigation() {
   const [visible, setVisible] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [active, setActive] = useState('home');
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const onScroll = () => {
-      setVisible(window.scrollY > window.innerHeight * 0.15);
-      const sections = navLinks.map(l => document.getElementById(l.id)).filter(Boolean);
-      let cur = 'home';
-      for (const s of sections) { if (s.getBoundingClientRect().top <= 120) cur = s.id; }
-      setActive(cur);
+      setVisible(window.scrollY > window.innerHeight * 0.15 || location.pathname !== '/');
+      if (location.pathname === '/') {
+        const sections = navLinks.map(l => document.getElementById(l.id)).filter(Boolean);
+        let cur = 'home';
+        for (const s of sections) { if (s.getBoundingClientRect().top <= 120) cur = s.id; }
+        setActive(cur);
+      } else {
+        const curLink = navLinks.find(l => l.path === location.pathname);
+        if (curLink) setActive(curLink.id);
+      }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll(); // initial check
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [location.pathname]);
 
-  const go = useCallback((id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  const go = useCallback((link) => {
+    if (link.path === '/') {
+      if (location.pathname === '/') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        navigate('/');
+      }
+    } else if (link.path.startsWith('/#')) {
+      if (location.pathname === '/') {
+        document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        navigate(link.path);
+        // Add a slight delay to allow page render before scroll
+        setTimeout(() => {
+          document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    } else {
+      navigate(link.path);
+      window.scrollTo(0, 0);
+    }
     setMobileOpen(false);
-  }, []);
+  }, [location.pathname, navigate]);
 
   return (
     <>
@@ -42,10 +71,10 @@ export default function Navigation() {
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="nav__inner">
-              <button className="nav__logo" onClick={() => go('home')}>#NIRA</button>
+              <button className="nav__logo" onClick={() => go(navLinks[0])}>#NIRA</button>
               <div className="nav__links">
                 {navLinks.map(l => (
-                  <button key={l.id} className={`nav__link ${active === l.id ? 'nav__link--on' : ''}`} onClick={() => go(l.id)}>
+                  <button key={l.id} className={`nav__link ${active === l.id ? 'nav__link--on' : ''}`} onClick={() => go(l)}>
                     {l.label}
                   </button>
                 ))}
@@ -72,7 +101,7 @@ export default function Navigation() {
                   <motion.button 
                     key={l.id} 
                     className={`nav__drawer-link ${active === l.id ? 'active' : ''}`} 
-                    onClick={() => go(l.id)} 
+                    onClick={() => go(l)} 
                     initial={{ opacity: 0, x: 30 }} 
                     animate={{ opacity: 1, x: 0 }} 
                     transition={{ delay: 0.1 * i, duration: 0.4 }}

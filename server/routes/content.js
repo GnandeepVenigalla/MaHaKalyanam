@@ -4,7 +4,7 @@
 // ============================================================
 
 import { Router } from 'express';
-import { SiteContent, Event, FoodMenu, Media, Gift } from '../db/init.js';
+import { SiteContent, Event, FoodMenu, Media, Gift, RsvpResponse } from '../db/init.js';
 import { verifyToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -65,7 +65,33 @@ router.put('/content', verifyToken, async (req, res) => {
 router.get('/events', async (_req, res) => {
   try {
     const events = await Event.find({}).sort({ sortOrder: 1 });
-    return res.json({ success: true, data: events });
+    
+    // Compute RSVP totals dynamically
+    const rsvps = await RsvpResponse.find({ attending: 'yes' });
+    const eventStats = {};
+    rsvps.forEach(r => {
+      if (r.events) {
+        r.events.forEach(ev => {
+          if (!eventStats[ev.eventName]) eventStats[ev.eventName] = 0;
+          const a = ev.adults || 0;
+          const k = ev.kids || 0;
+          const g = ev.guests || 0;
+          if (a > 0 || k > 0) {
+            eventStats[ev.eventName] += (a + k);
+          } else {
+            eventStats[ev.eventName] += g;
+          }
+        });
+      }
+    });
+
+    const eventsWithStats = events.map(ev => {
+      const e = ev.toObject();
+      e.rsvpCount = eventStats[e.name] || 0;
+      return e;
+    });
+
+    return res.json({ success: true, data: eventsWithStats });
   } catch (error) {
     console.error('Events fetch error:', error);
     return res.status(500).json({ success: false, message: 'Failed to fetch events.' });

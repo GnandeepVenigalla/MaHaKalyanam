@@ -110,9 +110,9 @@ export default function Hero() {
 
         .hero__sloka {
           font-family: 'Tiro Telugu', serif;
-          font-size: 0.85rem;
+          font-size: 1rem;
           line-height: 1.8;
-          color: rgba(0, 0, 0, 0.15); /* Very faint grey */
+          color: rgba(0, 0, 0, 0.65); /* Readable dark grey */
           text-align: center;
         }
 

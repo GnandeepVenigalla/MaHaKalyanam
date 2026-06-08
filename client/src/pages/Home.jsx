@@ -5,7 +5,6 @@ import Navigation from '../components/Navigation';
 import Hero from '../components/Hero';
 import FloralDivider from '../components/FloralDivider';
 import EventDetails from '../components/EventDetails';
-import YouTubePlayer from '../components/YouTubePlayer';
 import RSVPForm from '../components/RSVPForm';
 import FamilyDetails from '../components/FamilyDetails';
 import Footer from '../components/Footer';
@@ -41,8 +40,6 @@ function HomeContent() {
       <Hero />
       <FamilyDetails />
       <EventDetails />
-      <FloralDivider />
-      <YouTubePlayer />
       <FloralDivider />
       <RSVPForm />
       <Footer />

@@ -4,7 +4,7 @@ import {
   verifyToken,
   fetchRSVPs, fetchRSVPStats, deleteRSVP,
   fetchContent, updateContent,
-  fetchEvents, addEvent, deleteEvent,
+  fetchEvents, addEvent, updateEvents, deleteEvent,
   fetchMenu, addMenuItem, deleteMenuItem,
   fetchMedia, addMedia, deleteMedia,
   fetchGifts, addGift, deleteGift,
@@ -13,7 +13,8 @@ import {
 import {
   FiHome, FiUsers, FiEdit, FiCalendar, FiCoffee, FiFilm, FiGift,
   FiLogOut, FiExternalLink, FiTrash2, FiPlus, FiSearch,
-  FiCheck, FiX, FiAlertCircle, FiDroplet, FiRefreshCw
+  FiCheck, FiX, FiAlertCircle, FiDroplet, FiRefreshCw,
+  FiArrowUp, FiArrowDown
 } from 'react-icons/fi';
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -121,9 +122,44 @@ function GuestListTab({ rsvps, onDelete, onRefresh }) {
     return matchSearch && matchFilter;
   });
 
+  const eventStats = {};
+  (rsvps || []).forEach(r => {
+    if (r.attending === 'yes' && r.events) {
+      r.events.forEach(ev => {
+        if (!eventStats[ev.eventName]) {
+          eventStats[ev.eventName] = { adults: 0, kids: 0, total: 0 };
+        }
+        const a = ev.adults || 0;
+        const k = ev.kids || 0;
+        const g = ev.guests || 0;
+        if (typeof ev.adults === 'number' || typeof ev.kids === 'number') {
+          eventStats[ev.eventName].adults += a;
+          eventStats[ev.eventName].kids += k;
+          eventStats[ev.eventName].total += a + k;
+        } else {
+          eventStats[ev.eventName].total += g;
+        }
+      });
+    }
+  });
+
   return (
     <div>
       <h2 className="admin-page-title">Guest List ({filtered.length})</h2>
+
+      {Object.keys(eventStats).length > 0 && (
+        <div className="admin-event-stats" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
+          {Object.entries(eventStats).map(([name, stat]) => (
+            <div key={name} style={{ background: 'var(--color-ivory)', padding: '16px', borderRadius: '8px', border: '1px solid var(--color-champagne)', flex: '1 1 200px' }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: 'var(--color-burgundy)' }}>{name}</h4>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                <strong>{stat.total}</strong> Total Guests<br/>
+                ({stat.adults} Adults, {stat.kids} Kids)
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="admin-toolbar">
         <div className="admin-search">
@@ -177,9 +213,14 @@ function GuestListTab({ rsvps, onDelete, onRefresh }) {
                   <td>
                     {r.events && r.events.length > 0 ? (
                       <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.8rem' }}>
-                        {r.events.map((ev, i) => (
-                          <li key={i}>{ev.eventName}: {ev.guests}</li>
-                        ))}
+                        {r.events.map((ev, i) => {
+                          const hasDetails = typeof ev.adults === 'number' || typeof ev.kids === 'number';
+                          return (
+                            <li key={i}>
+                              {ev.eventName}: {hasDetails ? `${ev.adults || 0} Adults, ${ev.kids || 0} Kids` : `${ev.guests} Guests`}
+                            </li>
+                          );
+                        })}
                       </ul>
                     ) : '—'}
                   </td>
@@ -285,6 +326,20 @@ function EventsEditorTab({ events, onAdd, onDelete, onRefresh }) {
     setAdding(false);
   };
 
+  const handleMove = async (index, dir) => {
+    if (dir === -1 && index === 0) return;
+    if (dir === 1 && index === events.length - 1) return;
+    
+    const newEvents = [...events];
+    const temp = newEvents[index];
+    newEvents[index] = newEvents[index + dir];
+    newEvents[index + dir] = temp;
+    
+    const payload = newEvents.map((ev, i) => ({ ...ev, sort_order: i }));
+    await updateEvents(payload);
+    onRefresh();
+  };
+
   return (
     <div>
       <h2 className="admin-page-title">Wedding Events</h2>
@@ -296,7 +351,7 @@ function EventsEditorTab({ events, onAdd, onDelete, onRefresh }) {
           <p className="admin-empty">No events yet</p>
         ) : (
           <div className="admin-cards-list">
-            {events.map(ev => (
+            {events.map((ev, i) => (
               <div key={ev.id || ev._id} className="admin-list-card">
                 <div className="admin-list-card__info">
                   <strong>{ev.icon} {ev.name}</strong>
@@ -305,9 +360,19 @@ function EventsEditorTab({ events, onAdd, onDelete, onRefresh }) {
                   <span>{ev.venue}</span>
                   <span style={{fontSize: '0.8rem', color: '#888'}}>{ev.guestsAttending}</span>
                 </div>
-                <button className="admin-icon-btn admin-icon-btn--danger" onClick={() => onDelete(ev._id || ev.id)}>
-                  <FiTrash2 />
-                </button>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <button className="admin-icon-btn" onClick={() => handleMove(i, -1)} disabled={i === 0}>
+                      <FiArrowUp />
+                    </button>
+                    <button className="admin-icon-btn" onClick={() => handleMove(i, 1)} disabled={i === events.length - 1}>
+                      <FiArrowDown />
+                    </button>
+                  </div>
+                  <button className="admin-icon-btn admin-icon-btn--danger" onClick={() => onDelete(ev._id || ev.id)} style={{ marginLeft: '8px' }}>
+                    <FiTrash2 />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
