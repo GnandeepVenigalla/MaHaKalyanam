@@ -744,6 +744,25 @@ function ThemeEditorTab({ themeColors, onSave, onReset, showToast }) {
     }
   }, [themeColors]);
 
+  useEffect(() => {
+    if (!form.theme_names_font) return;
+    const fontName = form.theme_names_font.split(',')[0].replace(/['"]/g, '').trim();
+    if (!fontName) return;
+
+    const linkId = 'admin-dynamic-font';
+    let link = document.getElementById(linkId);
+    if (!link) {
+      link = document.createElement('link');
+      link.id = linkId;
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
+    // Only fetch if it doesn't look like a generic system font
+    if (!['serif', 'sans-serif', 'cursive', 'monospace', 'system-ui'].includes(fontName.toLowerCase())) {
+      link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@300;400;500;600&display=swap`;
+    }
+  }, [form.theme_names_font]);
+
   const handlePreset = (idx) => {
     setForm({ ...PRESET_THEMES[idx].colors });
     setActivePreset(idx);
@@ -921,8 +940,8 @@ function ThemeEditorTab({ themeColors, onSave, onReset, showToast }) {
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
           <h1 style={{ 
             fontFamily: form.theme_names_font || 'var(--font-heading)', 
-            fontSize: `calc(3rem * ${form.theme_names_size || 1})`, 
-            color: form.theme_primary,
+            fontSize: `calc(3.5rem * ${form.theme_names_size || 1})`, 
+            color: form.theme_accent,
             lineHeight: 1,
             margin: '20px 0'
           }}>

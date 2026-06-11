@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useSiteData } from '../context/SiteContext';
 import { FiMapPin, FiCalendar } from 'react-icons/fi';
 import { useLanguage } from '../context/LanguageContext';
+import downloadICS from '../utils/calendar';
 
 const defaultEvents = [
   {
@@ -34,10 +35,108 @@ function parseDateForTimeline(dateStr) {
   }
 }
 
+function formatToET(dateStr, timeStr) {
+  if (!dateStr) return null;
+  // YYYY-MM-DD or human readable date
+  let year, month, day;
+  const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    year = isoMatch[1];
+    month = isoMatch[2];
+    day = isoMatch[3];
+  } else {
+    const d = new Date(dateStr);
+    if (isNaN(d)) return null;
+    year = d.getFullYear();
+    month = String(d.getMonth() + 1).padStart(2, '0');
+    day = String(d.getDate()).padStart(2, '0');
+  }
+
+  // parse time like "09:30 AM"
+  let hh = '00', mm = '00', ss = '00';
+  if (timeStr) {
+    const m = timeStr.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?/i);
+    if (m) {
+      let hr = parseInt(m[1], 10);
+      const mi = parseInt(m[2], 10);
+      const sec = m[3] ? parseInt(m[3], 10) : 0;
+      const ampm = m[4];
+      if (ampm) {
+        if (/pm/i.test(ampm) && hr !== 12) hr += 12;
+        if (/am/i.test(ampm) && hr === 12) hr = 0;
+      }
+      hh = String(hr).padStart(2, '0');
+      mm = String(mi).padStart(2, '0');
+      ss = String(sec).padStart(2, '0');
+    }
+  }
+
+  return `${year}${month}${day}T${hh}${mm}${ss}`;
+}
+
+function addHoursToET(startStr, hours = 3) {
+  if (!startStr) return null;
+  // startStr = YYYYMMDDTHHMMSS
+  const y = parseInt(startStr.substr(0, 4), 10);
+  const m = parseInt(startStr.substr(4, 2), 10) - 1;
+  const d = parseInt(startStr.substr(6, 2), 10);
+  const hh = parseInt(startStr.substr(9, 2), 10);
+  const min = parseInt(startStr.substr(11, 2), 10);
+  const sec = parseInt(startStr.substr(13, 2), 10);
+
+  const dt = new Date(y, m, d, hh + hours, min, sec);
+  const pad = (n) => String(n).padStart(2, '0');
+  return '' + dt.getFullYear() + pad(dt.getMonth() + 1) + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + pad(dt.getMinutes()) + pad(dt.getSeconds());
+}
+
 const cardVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }
 };
+
+function generateCalendarLink(ev) {
+  if (ev.calendarLink && ev.calendarLink.trim() !== '') return ev.calendarLink;
+
+  try {
+    const text = encodeURIComponent(ev.name || '');
+    const details = encodeURIComponent(ev.description || '');
+    const location = encodeURIComponent(`${ev.venue || ''} ${ev.address || ''}`.trim());
+
+    if (!ev.date) return '#';
+
+    const safeDate = ev.date.replace(/-/g, '/');
+    const timeStr = ev.time ? ` ${ev.time}` : '';
+    const d = new Date(safeDate + timeStr);
+
+    if (isNaN(d.getTime())) return '#';
+
+    const pad = (n) => n.toString().padStart(2, '0');
+    const formatGoogleDate = (dateObj) => {
+      return dateObj.getUTCFullYear() +
+        pad(dateObj.getUTCMonth() + 1) +
+        pad(dateObj.getUTCDate()) + 'T' +
+        pad(dateObj.getUTCHours()) +
+        pad(dateObj.getUTCMinutes()) +
+        pad(dateObj.getUTCSeconds()) + 'Z';
+    };
+
+    const startStr = formatGoogleDate(d);
+    // Assume event is 3 hours long default
+    const endD = new Date(d.getTime() + 3 * 60 * 60 * 1000);
+    const endStr = formatGoogleDate(endD);
+
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${startStr}/${endStr}&details=${details}&location=${location}`;
+  } catch (err) {
+    return '#';
+  }
+}
+
+function generateMapLink(ev) {
+  if (ev.mapLink && ev.mapLink.trim() !== '') return ev.mapLink;
+  const location = `${ev.venue || ''} ${ev.address || ''}`.trim();
+  if (!location) return '#';
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+}
 
 export default function EventDetails() {
   const { events } = useSiteData();
@@ -97,10 +196,25 @@ export default function EventDetails() {
                     </div>
 
                     <div className="timeline__card-actions">
-                      <a href={ev.mapLink || '#'} target="_blank" rel="noopener noreferrer" className="timeline__btn">
+                      <a href={generateMapLink(ev)} target="_blank" rel="noopener noreferrer" className="timeline__btn">
                         <FiMapPin /> {t('events.viewMaps')}
                       </a>
-                      <a href={ev.calendarLink || '#'} target="_blank" rel="noopener noreferrer" className="timeline__btn">
+                      <a
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const start = formatToET(ev.date, ev.time);
+                          const end = addHoursToET(start, 3);
+                          downloadICS({
+                            title: ev.name,
+                            description: ev.description,
+                            location: `${ev.venue || ''}${ev.address ? ' - ' + ev.address : ''}`,
+                            start,
+                            end,
+                          });
+                        }}
+                        className="timeline__btn"
+                      >
                         <FiCalendar /> {t('events.addCalendar')}
                       </a>
                     </div>

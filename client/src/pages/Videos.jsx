@@ -2,9 +2,11 @@ import React from 'react';
 import Navigation from '../components/Navigation';
 import YouTubePlayer from '../components/YouTubePlayer';
 import Footer from '../components/Footer';
-import { useSiteData } from '../context/SiteContext';
+import { useSiteData, SiteProvider } from '../context/SiteContext';
+import { LanguageProvider } from '../context/LanguageContext';
+import CoupleStory from '../components/CoupleStory';
 
-export default function Videos() {
+function VideosContent() {
   const { loading } = useSiteData();
 
   if (loading) {
@@ -24,9 +26,20 @@ export default function Videos() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navigation />
       <div style={{ flex: 1, paddingTop: '100px', background: 'var(--cream, #F6F1EB)' }}>
+        <CoupleStory />
         <YouTubePlayer />
       </div>
       <Footer />
     </div>
+  );
+}
+
+export default function Videos() {
+  return (
+    <LanguageProvider>
+      <SiteProvider>
+        <VideosContent />
+      </SiteProvider>
+    </LanguageProvider>
   );
 }

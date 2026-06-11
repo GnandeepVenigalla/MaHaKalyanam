@@ -203,6 +203,27 @@ export function SiteProvider({ children }) {
     loadData();
   }, [loadData]);
 
+  // Dynamically load the chosen font family from Google Fonts
+  useEffect(() => {
+    if (!theme.theme_names_font) return;
+    const fontName = theme.theme_names_font.split(',')[0].replace(/['"]/g, '').trim();
+    if (!fontName) return;
+
+    const linkId = 'site-dynamic-font';
+    let link = document.getElementById(linkId);
+    if (!link) {
+      link = document.createElement('link');
+      link.id = linkId;
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
+    
+    // Only fetch if it doesn't look like a generic system font
+    if (!['serif', 'sans-serif', 'cursive', 'monospace', 'system-ui'].includes(fontName.toLowerCase())) {
+      link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@300;400;500;600&display=swap`;
+    }
+  }, [theme.theme_names_font]);
+
   const value = {
     content,
     events,

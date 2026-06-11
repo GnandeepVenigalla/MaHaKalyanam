@@ -74,48 +74,11 @@ export default function Navigation() {
           >
             <div className="nav__inner">
               <button className="nav__logo" onClick={() => go(navLinks[0])}>#NIRA</button>
-              <div className="nav__links">
-                {navLinks.map(l => (
-                  <button key={l.id} className={`nav__link ${active === l.id ? 'nav__link--on' : ''}`} onClick={() => go(l)}>
-                    {t(l.label)}
-                  </button>
-                ))}
-              </div>
-              <button className="nav__toggle" onClick={() => setMobileOpen(true)} aria-label="Menu">
-                <FiMenu />
-              </button>
             </div>
           </motion.nav>
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {mobileOpen && (
-          <>
-            <motion.div className="nav__overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileOpen(false)} />
-            <motion.div className="nav__drawer" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
-              <div className="nav__drawer-top">
-                <span className="nav__drawer-logo">#NIRA</span>
-                <button onClick={() => setMobileOpen(false)}><FiX size={24} /></button>
-              </div>
-              <div className="nav__drawer-links">
-                {navLinks.map((l, i) => (
-                  <motion.button 
-                    key={l.id} 
-                    className={`nav__drawer-link ${active === l.id ? 'active' : ''}`} 
-                    onClick={() => go(l)} 
-                    initial={{ opacity: 0, x: 30 }} 
-                    animate={{ opacity: 1, x: 0 }} 
-                    transition={{ delay: 0.1 * i, duration: 0.4 }}
-                  >
-                    {t(l.label)}
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
       <style>{`
         .nav {
