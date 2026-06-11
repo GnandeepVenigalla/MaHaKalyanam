@@ -73,6 +73,13 @@ const giftSchema = new mongoose.Schema({
   sortOrder:   { type: Number, default: 0 },
 });
 
+const translationSchema = new mongoose.Schema({
+  key:       { type: String, unique: true, required: true },
+  en:        { type: String },
+  te:        { type: String },
+  updatedAt: { type: Date, default: Date.now },
+});
+
 // ── Models ──────────────────────────────────────────────────
 
 export const SiteContent  = mongoose.model('SiteContent',  siteContentSchema);
@@ -81,6 +88,7 @@ export const FoodMenu     = mongoose.model('FoodMenu',     foodMenuSchema);
 export const RsvpResponse = mongoose.model('RsvpResponse', rsvpResponseSchema);
 export const Media        = mongoose.model('Media',        mediaSchema);
 export const Gift         = mongoose.model('Gift',         giftSchema);
+export const Translation  = mongoose.model('Translation',  translationSchema);
 
 // ── Connect to MongoDB ──────────────────────────────────────
 
@@ -109,6 +117,7 @@ export async function seedData() {
     await seedFoodMenu();
     await seedMedia();
     await seedGifts();
+    await seedTranslations();
     console.log('✅ Seed data check complete');
   } catch (error) {
     console.error('❌ Seed data error:', error.message);
@@ -278,6 +287,63 @@ async function seedGifts() {
 
   await Gift.insertMany(gifts);
   console.log('   → Seeded gifts');
+}
+
+async function seedTranslations() {
+  const count = await Translation.countDocuments();
+  if (count > 0) return;
+
+  const translations = [
+    { key: 'intro.invited', en: 'You are cordially invited to the wedding of', te: 'వివాహ శుభలేఖ' },
+    { key: 'intro.open', en: 'Open Invitation', te: 'ఆహ్వానం చూడండి' },
+    { key: 'intro.lang.english', en: 'English', te: 'English' },
+    { key: 'intro.lang.telugu', en: 'తెలుగు', te: 'తెలుగు' },
+    { key: 'hero.blessings', en: 'WITH THE BLESSINGS OF ELDERS', te: 'పెద్దల ఆశీర్వాదంతో' },
+    { key: 'hero.groomName', en: 'Ranjith Rao', te: 'రంజిత్ రావు' },
+    { key: 'hero.brideName', en: 'Nithya', te: 'నిత్య' },
+    { key: 'family.together', en: '✦ TOGETHER WITH OUR FAMILIES ✦', te: '✦ మా కుటుంబాలతో కలిసి ✦' },
+    { key: 'family.welcome', en: 'We solicit your gracious presence with family and friends on the auspicious occasion of our wedding', te: 'మా వివాహ శుభ సందర్భంలో మీ కుటుంబం మరియు స్నేహితులతో కలిసి మీ ఆశీర్వాద పూర్వక హాజరును మనస్ఫూర్తిగా కోరుతున్నాము' },
+    { key: 'family.sonOf', en: 'SON OF', te: 'తనయుడు' },
+    { key: 'family.daughterOf', en: 'DAUGHTER OF', te: 'తనయ' },
+    { key: 'family.groomName', en: 'Ranjith Rao', te: 'రంజిత్ రావు' },
+    { key: 'family.brideName', en: 'Nithya', te: 'నిత్య' },
+    { key: 'family.groomParents', en: 'Ramarao & Sunitha', te: 'రామారావు & సునీత' },
+    { key: 'family.brideParents', en: 'Ravindar Reddy & Susheela', te: 'రవీందర్ రెడ్డి & సుశీల' },
+    { key: 'events.title', en: 'Events', te: 'కార్యక్రమాలు' },
+    { key: 'events.viewMaps', en: 'VIEW MAPS', te: 'మ్యాప్ చూడండి' },
+    { key: 'events.addCalendar', en: 'ADD TO CALENDAR', te: 'క్యాలెండర్‌కు జోడించండి' },
+    { key: 'countdown.title', en: 'Counting Down To Our Special Day', te: 'మా ప్రత్యేక రోజుకు కౌంట్‌డౌన్' },
+    { key: 'countdown.days', en: 'Days', te: 'రోజులు' },
+    { key: 'countdown.hours', en: 'Hours', te: 'గంటలు' },
+    { key: 'countdown.minutes', en: 'Minutes', te: 'నిమిషాలు' },
+    { key: 'countdown.seconds', en: 'Seconds', te: 'సెకన్లు' },
+    { key: 'rsvp.label', en: '✦ JOIN THE CELEBRATION ✦', te: '✦ వేడుకలో చేరండి ✦' },
+    { key: 'rsvp.title', en: "We'd Love to See You", te: 'మిమ్మల్ని చూడాలని ఆశిస్తున్నాము' },
+    { key: 'rsvp.subtitle', en: 'A few details to help us celebrate with you', te: 'మీతో వేడుకలు జరుపుకోవడానికి కొన్ని వివరాలు' },
+    { key: 'rsvp.guestDetails', en: '✦ GUEST DETAILS', te: '✦ అతిథి వివరాలు' },
+    { key: 'rsvp.whichEvents', en: '✦ WHICH EVENTS?', te: '✦ ఏ కార్యక్రమాలు?' },
+    { key: 'rsvp.tapHint', en: 'Tap + to join an event', te: 'ఈవెంట్‌లో చేరడానికి + నొక్కండి' },
+    { key: 'rsvp.namePlaceholder', en: 'Your Name *', te: 'మీ పేరు *' },
+    { key: 'rsvp.phonePlaceholder', en: 'Phone Number *', te: 'ఫోన్ నంబర్ *' },
+    { key: 'rsvp.emailPlaceholder', en: 'Email (for confirmation)', te: 'ఇమెయిల్ (నిర్ధారణ కోసం)' },
+    { key: 'rsvp.messagePlaceholder', en: 'Message for the couple (Optional)', te: 'జంటకు సందేశం (ఐచ్ఛికం)' },
+    { key: 'rsvp.adults', en: 'Adults', te: 'పెద్దలు' },
+    { key: 'rsvp.kids', en: 'Kids', te: 'పిల్లలు' },
+    { key: 'rsvp.send', en: 'Send RSVP', te: 'RSVP పంపండి' },
+    { key: 'rsvp.sending', en: 'Sending...', te: 'పంపుతోంది...' },
+    { key: 'rsvp.thankYou', en: 'Thank You!', te: 'ధన్యవాదాలు!' },
+    { key: 'rsvp.successText', en: "Your response has been recorded. We can't wait to celebrate with you.", te: 'మీ స్పందన నమోదు చేయబడింది. మీతో వేడుకలు జరుపుకోవడానికి మేము ఎదురుచూస్తున్నాము.' },
+    { key: 'rsvp.submitAnother', en: 'Submit Another', te: 'మరొకటి సమర్పించండి' },
+    { key: 'rsvp.errorName', en: 'Please enter your name', te: 'దయచేసి మీ పేరు నమోదు చేయండి' },
+    { key: 'nav.home', en: 'Home', te: 'హోమ్' },
+    { key: 'nav.events', en: 'Events', te: 'కార్యక్రమాలు' },
+    { key: 'nav.ourStory', en: 'Our Story', te: 'మా కథ' },
+    { key: 'nav.rsvp', en: 'RSVP', te: 'RSVP' },
+    { key: 'footer.madeWith', en: 'Made with ♡ for a beautiful beginning', te: 'అందమైన ప్రారంభం కోసం ♡ తో తయారు చేయబడింది' },
+  ];
+
+  await Translation.insertMany(translations);
+  console.log('   → Seeded translations');
 }
 
 export default { connectDB, seedData };

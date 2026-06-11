@@ -20,6 +20,8 @@ const THEME_CSS_MAP = {
   theme_neutral_1:      '--color-champagne',
   theme_neutral_2:      '--color-ivory',
   theme_neutral_3:      '--color-cream',
+  theme_names_font:     '--font-names',
+  theme_names_size:     '--font-names-scale',
 };
 
 function hexToRgb(hex) {

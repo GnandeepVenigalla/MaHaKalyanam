@@ -3,13 +3,9 @@ import { motion, useInView } from 'framer-motion';
 import { useSiteData } from '../context/SiteContext';
 import { useLanguage } from '../context/LanguageContext';
 
-const WeddingKnot = () => (
-  <svg viewBox="0 0 64 64" width="56" height="56" fill="none" stroke="var(--color-gold-dark, #A89858)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M 32 32 C 10 10, 10 54, 32 32 C 54 10, 54 54, 32 32 Z" />
-    <circle cx="32" cy="32" r="5" fill="var(--color-ivory, #FAFAFA)" />
-    <circle cx="32" cy="32" r="2" fill="var(--color-gold-dark, #A89858)" />
-    <path d="M 30 36 C 28 45, 24 50, 20 54" />
-    <path d="M 34 36 C 36 45, 40 50, 44 54" />
+const InfinitySymbol = () => (
+  <svg viewBox="0 0 64 64" width="56" height="56" fill="none" stroke="var(--theme-accent, #D4A853)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M 22 24 C 8 24, 8 40, 22 40 C 32 40, 32 24, 42 24 C 56 24, 56 40, 42 40 C 32 40, 32 24, 22 24 Z" />
   </svg>
 );
 
@@ -70,7 +66,7 @@ export default function FamilyDetails() {
             animate={inView ? { opacity: 1, scale: 1 } : {}} 
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <WeddingKnot />
+            <InfinitySymbol />
           </motion.div>
 
           <motion.div 
@@ -182,8 +178,8 @@ export default function FamilyDetails() {
         }
 
         .fam__name {
-          font-family: var(--font-heading);
-          font-size: 3.5rem;
+          font-family: var(--font-names, var(--font-heading));
+          font-size: calc(3.5rem * var(--font-names-scale, 1));
           font-style: italic;
           color: #702632; /* Burgundy text for names */
           margin-bottom: 24px;
@@ -213,7 +209,7 @@ export default function FamilyDetails() {
           .fam__center { order: 0; margin: 10px 0; justify-self: center; display: flex; justify-content: center; width: 100%; }
           .fam__grid .fam__card:last-child { order: 1; }
           .fam__card { padding: 40px 20px; }
-          .fam__name { font-size: 2.8rem; }
+          .fam__name { font-size: calc(2.8rem * var(--font-names-scale, 1)); }
           .fam__invite-text { font-size: 1.1rem; }
           .fam__decor-line { width: 60px; }
         }

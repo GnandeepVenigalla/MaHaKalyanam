@@ -216,3 +216,16 @@ export async function incrementAkshintalu() {
 export async function getAkshintalu() {
   return request('/api/akshintalu');
 }
+
+// ─── Translations ────────────────────────────────────────
+export async function fetchTranslations() {
+  return request('/api/translations');
+}
+
+export async function updateTranslations(data) {
+  return request('/api/translations', {
+    method: 'PUT',
+    headers: getHeaders(true),
+    body: JSON.stringify(data),
+  });
+}

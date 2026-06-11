@@ -1,19 +1,28 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import translations from '../utils/translations';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { fetchTranslations } from '../utils/api';
 
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState('en');
 
+  const [translations, setTranslations] = useState({});
+
+  useEffect(() => {
+    fetchTranslations()
+      .then(data => {
+        if (data) setTranslations(data);
+      })
+      .catch(err => console.error('Failed to load translations:', err));
+  }, []);
+
   const t = useCallback((key) => {
     const entry = translations[key];
     if (!entry) {
-      console.warn(`Translation missing for key: "${key}"`);
       return key;
     }
     return entry[language] || entry.en || key;
-  }, [language]);
+  }, [language, translations]);
 
   const value = { language, setLanguage, t };
 

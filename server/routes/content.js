@@ -4,7 +4,7 @@
 // ============================================================
 
 import { Router } from 'express';
-import { SiteContent, Event, FoodMenu, Media, Gift, RsvpResponse } from '../db/init.js';
+import { SiteContent, Event, FoodMenu, Media, Gift, RsvpResponse, Translation } from '../db/init.js';
 import { verifyToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -565,6 +565,8 @@ router.post('/theme/reset', verifyToken, async (_req, res) => {
       theme_neutral_1: '#F5E6CC',
       theme_neutral_2: '#FFF8F0',
       theme_neutral_3: '#FDF5E8',
+      theme_names_font: 'Cormorant Garamond, serif',
+      theme_names_size: '1',
     };
     for (const [key, value] of Object.entries(defaults)) {
       await SiteContent.findOneAndUpdate(
@@ -577,6 +579,58 @@ router.post('/theme/reset', verifyToken, async (_req, res) => {
   } catch (error) {
     console.error('Theme reset error:', error);
     return res.status(500).json({ success: false, message: 'Failed to reset theme.' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// TRANSLATIONS
+// ══════════════════════════════════════════════════════════════
+
+// GET /api/translations — fetch all translations (public)
+router.get('/translations', async (_req, res) => {
+  try {
+    const rows = await Translation.find({});
+    // Convert to { key: { en: '...', te: '...' } } format for LanguageContext
+    const translationsObj = {};
+    for (const row of rows) {
+      translationsObj[row.key] = { en: row.en, te: row.te };
+    }
+    return res.json({ success: true, data: translationsObj });
+  } catch (error) {
+    console.error('Translations fetch error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch translations.' });
+  }
+});
+
+// PUT /api/translations — bulk-update translations (admin)
+// Body: array of objects { key, en, te } or object of objects { key: { en, te } }
+router.put('/translations', verifyToken, async (req, res) => {
+  try {
+    const updates = req.body;
+    
+    if (!updates || typeof updates !== 'object') {
+      return res.status(400).json({ success: false, message: 'Invalid payload.' });
+    }
+
+    const entries = Array.isArray(updates) ? updates : Object.entries(updates).map(([key, val]) => ({ key, ...val }));
+
+    for (const row of entries) {
+      if (!row.key) continue;
+      await Translation.findOneAndUpdate(
+        { key: row.key },
+        { 
+          key: row.key, 
+          en: row.en !== undefined ? String(row.en) : '', 
+          te: row.te !== undefined ? String(row.te) : '',
+          updatedAt: new Date()
+        },
+        { upsert: true, new: true }
+      );
+    }
+    return res.json({ success: true, message: 'Translations updated.' });
+  } catch (error) {
+    console.error('Translations update error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update translations.' });
   }
 });
 

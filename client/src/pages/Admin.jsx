@@ -9,12 +9,13 @@ import {
   fetchMedia, addMedia, deleteMedia,
   fetchGifts, addGift, deleteGift,
   fetchTheme, updateTheme, resetTheme,
+  fetchTranslations, updateTranslations,
 } from '../utils/api';
 import {
   FiHome, FiUsers, FiEdit, FiCalendar, FiCoffee, FiFilm, FiGift,
   FiLogOut, FiExternalLink, FiTrash2, FiPlus, FiSearch,
   FiCheck, FiX, FiAlertCircle, FiDroplet, FiRefreshCw,
-  FiArrowUp, FiArrowDown
+  FiArrowUp, FiArrowDown, FiGlobe
 } from 'react-icons/fi';
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -625,8 +626,9 @@ const PRESET_THEMES = [
       theme_primary: '#4A0E1B', theme_primary_deep: '#2D0A12', theme_primary_light: '#6B1D30',
       theme_secondary: '#3A0B15', theme_secondary_dark: '#1A0509',
       theme_accent: '#D4A853', theme_accent_light: '#E8C87A', theme_accent_dark: '#B8922F', theme_accent_pale: '#F0D78C',
-      theme_text_primary: '#2C1810', theme_text_secondary: 'rgba(44,24,16,0.65)', theme_text_accent: '#D4A853',
+      theme_text_primary: '#2C1810', theme_text_secondary: 'rgba(44, 24, 16, 0.65)', theme_text_accent: '#D4A853',
       theme_neutral_1: '#F5E6CC', theme_neutral_2: '#FFF8F0', theme_neutral_3: '#FDF5E8',
+      theme_names_font: 'Cormorant Garamond, serif', theme_names_size: '1',
     },
   },
   {
@@ -639,6 +641,7 @@ const PRESET_THEMES = [
       theme_accent: '#C9A84C', theme_accent_light: '#DEC06E', theme_accent_dark: '#A88B30', theme_accent_pale: '#EDD88A',
       theme_text_primary: '#162C24', theme_text_secondary: 'rgba(22,44,36,0.65)', theme_text_accent: '#C9A84C',
       theme_neutral_1: '#E8F0E4', theme_neutral_2: '#F5FFF8', theme_neutral_3: '#EAF5E6',
+      theme_names_font: 'Cormorant Garamond, serif', theme_names_size: '1',
     },
   },
   {
@@ -651,6 +654,7 @@ const PRESET_THEMES = [
       theme_accent: '#E8A0B0', theme_accent_light: '#F0BCC8', theme_accent_dark: '#C47888', theme_accent_pale: '#F8D8E0',
       theme_text_primary: '#2A1A20', theme_text_secondary: 'rgba(42,26,32,0.65)', theme_text_accent: '#E8A0B0',
       theme_neutral_1: '#F5E0E4', theme_neutral_2: '#FFF5F7', theme_neutral_3: '#FDEEF0',
+      theme_names_font: 'Cormorant Garamond, serif', theme_names_size: '1',
     },
   },
   {
@@ -663,6 +667,7 @@ const PRESET_THEMES = [
       theme_accent: '#C9B87B', theme_accent_light: '#DED0A0', theme_accent_dark: '#A89858', theme_accent_pale: '#EDE4C4',
       theme_text_primary: '#111111', theme_text_secondary: 'rgba(17,17,17,0.65)', theme_text_accent: '#C9B87B',
       theme_neutral_1: '#E8E4D8', theme_neutral_2: '#FAFAFA', theme_neutral_3: '#F5F0E8',
+      theme_names_font: 'Cormorant Garamond, serif', theme_names_size: '1',
     },
   },
   {
@@ -675,6 +680,7 @@ const PRESET_THEMES = [
       theme_accent: '#C0A0E0', theme_accent_light: '#D4BCE8', theme_accent_dark: '#9878C0', theme_accent_pale: '#E8D8F0',
       theme_text_primary: '#1A1028', theme_text_secondary: 'rgba(26,16,40,0.65)', theme_text_accent: '#C0A0E0',
       theme_neutral_1: '#E4D8F0', theme_neutral_2: '#FDFBFF', theme_neutral_3: '#F0E8F8',
+      theme_names_font: 'Cormorant Garamond, serif', theme_names_size: '1',
     },
   },
 ];
@@ -832,6 +838,40 @@ function ThemeEditorTab({ themeColors, onSave, onReset, showToast }) {
         </div>
       </div>
 
+      {/* ── Typography Settings ── */}
+      <div className="admin-section">
+        <h3 className="admin-section-title">Typography (Bride & Groom Names)</h3>
+        <p style={{ fontSize: '0.85rem', color: '#718096', marginBottom: '16px' }}>Customize the font family and size specifically for the names on the Home page and Family section.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', maxWidth: '600px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', color: '#4a5568', fontWeight: 600, marginBottom: '8px' }}>Font Family</label>
+            <input 
+              type="text" 
+              className="admin-input" 
+              value={form.theme_names_font || ''} 
+              onChange={e => handleColorChange('theme_names_font', e.target.value)} 
+              placeholder="e.g. 'Great Vibes', cursive"
+            />
+            <span style={{ fontSize: '0.75rem', color: '#a0aec0', display: 'block', marginTop: '4px' }}>Include fallback fonts (e.g., serif).</span>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', color: '#4a5568', fontWeight: 600, marginBottom: '8px' }}>Size Scale</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <input 
+                type="range" 
+                min="0.5" 
+                max="2.5" 
+                step="0.05" 
+                value={form.theme_names_size || 1} 
+                onChange={e => handleColorChange('theme_names_size', e.target.value)} 
+                style={{ flex: 1 }}
+              />
+              <span style={{ fontSize: '0.9rem', color: '#2d3748', minWidth: '40px' }}>{Number(form.theme_names_size || 1).toFixed(2)}x</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── Live Preview ── */}
       <div className="admin-section">
         <h3 className="admin-section-title">Live Preview</h3>
@@ -877,6 +917,19 @@ function ThemeEditorTab({ themeColors, onSave, onReset, showToast }) {
             <span style={{ color: form.theme_text_primary, fontSize: '0.85rem' }}>Sample card with glass effect</span>
           </div>
         </div>
+
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <h1 style={{ 
+            fontFamily: form.theme_names_font || 'var(--font-heading)', 
+            fontSize: `calc(3rem * ${form.theme_names_size || 1})`, 
+            color: form.theme_primary,
+            lineHeight: 1,
+            margin: '20px 0'
+          }}>
+            Ranjith <span style={{ color: form.theme_accent, fontSize: '0.7em' }}>&</span> Nithya
+          </h1>
+        </div>
+
       </div>
 
       {/* ── Actions ── */}
@@ -892,6 +945,64 @@ function ThemeEditorTab({ themeColors, onSave, onReset, showToast }) {
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════ */
+/*  Translations Editor Tab                                        */
+/* ═══════════════════════════════════════════════════════════════ */
+function TranslationsEditorTab({ translations, onSave }) {
+  const [form, setForm] = useState({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setForm(translations || {});
+  }, [translations]);
+
+  const handleChange = (key, field, value) => {
+    setForm(prev => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    await onSave(form);
+    setSaving(false);
+  };
+
+  return (
+    <div>
+      <h2 className="admin-page-title">Telugu Translations</h2>
+      <p style={{ color: '#8b8ba0', marginBottom: 28, fontSize: '0.9rem', lineHeight: 1.6 }}>
+        Update the Telugu text for the various parts of the website. English text is provided for reference.
+      </p>
+      <form className="admin-content-form" onSubmit={handleSubmit} style={{ gridTemplateColumns: '1fr', maxWidth: '900px' }}>
+        {Object.entries(form).map(([key, val]) => (
+          <div key={key} className="admin-field" style={{ background: '#fff', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
+            <label style={{ fontSize: '0.75rem', color: '#6366f1', marginBottom: '4px' }}>{key}</label>
+            <div style={{ fontSize: '0.9rem', color: '#4a5568', marginBottom: '8px', padding: '8px', background: '#f7fafc', borderRadius: '4px' }}>
+              <strong>English:</strong> {val.en}
+            </div>
+            <textarea
+              value={val.te || ''}
+              onChange={e => handleChange(key, 'te', e.target.value)}
+              rows={2}
+              placeholder="Telugu translation"
+              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e0', fontFamily: 'inherit' }}
+            />
+          </div>
+        ))}
+        <button type="submit" className="admin-btn admin-btn--primary" disabled={saving}>
+          {saving ? 'Saving...' : 'Save Translations'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 const tabs = [
   { id: 'dashboard', label: 'Dashboard', icon: FiHome },
   { id: 'guests', label: 'Guest List', icon: FiUsers },
@@ -900,6 +1011,7 @@ const tabs = [
   { id: 'menu', label: 'Food Menu', icon: FiCoffee },
   { id: 'media', label: 'Media', icon: FiFilm },
   { id: 'gifts', label: 'Gifts', icon: FiGift },
+  { id: 'translations', label: 'Translations', icon: FiGlobe },
   { id: 'theme', label: 'Theme Colors', icon: FiDroplet },
 ];
 
@@ -913,6 +1025,7 @@ export default function Admin() {
   const [menu, setMenu] = useState([]);
   const [media, setMedia] = useState([]);
   const [gifts, setGifts] = useState([]);
+  const [translations, setTranslations] = useState({});
   const [themeColors, setThemeColors] = useState({});
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
@@ -925,7 +1038,7 @@ export default function Admin() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [rsvpData, statsData, contentData, eventsData, menuData, mediaData, giftsData, themeData] = await Promise.allSettled([
+      const [rsvpData, statsData, contentData, eventsData, menuData, mediaData, giftsData, themeData, translationsData] = await Promise.allSettled([
         fetchRSVPs(),
         fetchRSVPStats(),
         fetchContent(),
@@ -934,6 +1047,7 @@ export default function Admin() {
         fetchMedia(),
         fetchGifts(),
         fetchTheme(),
+        fetchTranslations(),
       ]);
 
       if (rsvpData.status === 'fulfilled') setRsvps(rsvpData.value || []);
@@ -965,6 +1079,7 @@ export default function Admin() {
       if (mediaData.status === 'fulfilled') setMedia(mediaData.value || []);
       if (giftsData.status === 'fulfilled') setGifts(giftsData.value || []);
       if (themeData.status === 'fulfilled') setThemeColors(themeData.value || {});
+      if (translationsData.status === 'fulfilled') setTranslations(translationsData.value || {});
     } catch (err) {
       showToast('Failed to load data', 'error');
     } finally {
@@ -1094,6 +1209,14 @@ export default function Admin() {
     } catch { showToast('Failed to reset theme', 'error'); }
   };
 
+  const handleSaveTranslations = async (data) => {
+    try {
+      await updateTranslations(data);
+      showToast('Translations saved');
+      loadData();
+    } catch { showToast('Failed to save translations', 'error'); }
+  };
+
   const renderTab = () => {
     switch (activeTab) {
       case 'dashboard': return <DashboardTab rsvps={rsvps} stats={stats} />;
@@ -1103,6 +1226,7 @@ export default function Admin() {
       case 'menu': return <MenuEditorTab menu={menu} onAdd={handleAddMenuItem} onDelete={handleDeleteMenuItem} />;
       case 'media': return <MediaEditorTab media={media} onAdd={handleAddMedia} onDelete={handleDeleteMedia} />;
       case 'gifts': return <GiftsEditorTab gifts={gifts} onAdd={handleAddGift} onDelete={handleDeleteGift} />;
+      case 'translations': return <TranslationsEditorTab translations={translations} onSave={handleSaveTranslations} />;
       case 'theme': return <ThemeEditorTab themeColors={themeColors} onSave={handleSaveTheme} onReset={handleResetTheme} showToast={showToast} />;
       default: return null;
     }

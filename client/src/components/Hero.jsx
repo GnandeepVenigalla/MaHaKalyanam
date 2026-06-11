@@ -170,9 +170,9 @@ export default function Hero() {
         }
 
         .hero__name {
-          font-family: var(--font-heading, 'Cormorant Garamond', serif);
+          font-family: var(--font-names, var(--font-heading, 'Cormorant Garamond', serif));
           font-style: italic;
-          font-size: clamp(4.5rem, 12vw, 8rem);
+          font-size: calc(clamp(4.5rem, 12vw, 8rem) * var(--font-names-scale, 1));
           font-weight: 400;
           line-height: 0.95;
           color: #1A1C1A; /* Very dark text */
