@@ -138,22 +138,6 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
                   <button className="intro__btn" onClick={handleOpen}>
                     {t('intro.open')}
                   </button>
-
-                  <div className="intro__lang-toggle">
-                    <button
-                      className={`intro__lang-btn ${language === 'en' ? 'intro__lang-btn--active' : ''}`}
-                      onClick={() => setLanguage('en')}
-                    >
-                      English
-                    </button>
-                    <span className="intro__lang-divider">|</span>
-                    <button
-                      className={`intro__lang-btn ${language === 'te' ? 'intro__lang-btn--active' : ''}`}
-                      onClick={() => setLanguage('te')}
-                    >
-                      తెలుగు
-                    </button>
-                  </div>
                 </div>
 
                 <p className="intro__hashtag">#NIRA</p>
