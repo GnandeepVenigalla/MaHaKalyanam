@@ -51,7 +51,7 @@ function buildVTimezone() {
   ].join('\r\n');
 }
 
-export default function downloadICS(event) {
+export function downloadICS(event) {
   if (!event || !event.start || !event.end) return;
 
   const title = escapeICalText(event.title || 'Event');
@@ -91,4 +91,49 @@ export default function downloadICS(event) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+// Opens the generated .ics in a new tab/window (no download attribute) so
+// iOS/macOS/desktop calendar apps will show the native add dialog.
+export function openICS(event) {
+  if (!event || !event.start || !event.end) return;
+
+  const title = escapeICalText(event.title || 'Event');
+  const description = escapeICalText(event.description || '');
+  const location = escapeICalText(event.location || '');
+  const dtstamp = formatDTStamp(new Date());
+  const uid = uidForEvent(event.title || 'event');
+
+  const lines = [];
+  lines.push('BEGIN:VCALENDAR');
+  lines.push('VERSION:2.0');
+  lines.push('PRODID:-//MaHaKalyanam//EN');
+  lines.push('CALSCALE:GREGORIAN');
+  lines.push(buildVTimezone());
+
+  lines.push('BEGIN:VEVENT');
+  lines.push(`UID:${uid}`);
+  lines.push(`DTSTAMP:${dtstamp}`);
+  lines.push(`DTSTART;TZID=America/New_York:${event.start}`);
+  lines.push(`DTEND;TZID=America/New_York:${event.end}`);
+  lines.push(`SUMMARY:${title}`);
+  if (description) lines.push(`DESCRIPTION:${description}`);
+  if (location) lines.push(`LOCATION:${location}`);
+  lines.push('END:VEVENT');
+
+  lines.push('END:VCALENDAR');
+
+  const icsContent = lines.join('\r\n');
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+
+  // Open in new tab/window without download attribute
+  const w = window.open(url, '_blank');
+  if (!w) {
+    // fallback: navigate current window (some mobile browsers block window.open)
+    window.location.href = url;
+  }
+
+  // Revoke after a short delay
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }

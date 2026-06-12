@@ -1,36 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
   const { language, setLanguage, t } = useLanguage();
-  // States: idle -> closing -> flying -> transparent_pause -> expanding -> done
+  // States: idle -> opening -> done
   const [animState, setAnimState] = useState('idle');
+
+  // Respect user's reduced motion preference
+  const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const handleOpen = () => {
     if (animState !== 'idle') return;
-    setAnimState('closing');
+    if (prefersReduced) {
+      // Skip animation for reduced-motion users
+      setAnimState('done');
+      onOpen();
+      return;
+    }
 
-    // 1. Content fades out
+    setAnimState('opening');
+
+    // petals + curtain timing (curtain slides up while petals fall)
+    const TOTAL_MS = 900;
     setTimeout(() => {
-      setAnimState('flying');
-
-      // 2. Ring flies in and scales to 1
-      setTimeout(() => {
-        setAnimState('transparent_pause');
-
-        // 3. Brief pause with transparent background to reveal hero through the hole
-        setTimeout(() => {
-          setAnimState('expanding');
-
-          // 4. Ring expands massively to reveal full page
-          setTimeout(() => {
-            setAnimState('done');
-            onOpen();
-          }, 1200);
-        }, 400);
-      }, 800);
-    }, 500);
+      setAnimState('done');
+      onOpen();
+    }, TOTAL_MS);
   };
 
   useEffect(() => {
@@ -39,42 +35,82 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
     return () => window.removeEventListener('keydown', h);
   }, [animState]);
 
-  const isIntroSolid = ['idle', 'closing', 'flying'].includes(animState);
-  const showContent = ['idle', 'closing'].includes(animState);
-  const showRing = ['flying', 'transparent_pause', 'expanding'].includes(animState);
+  const isIntroSolid = animState !== 'done';
+  const showContent = animState === 'idle';
 
   return (
     <AnimatePresence>
       {animState !== 'done' && (
         <motion.div
-          className="intro"
+          className={`intro ${animState === 'opening' ? 'opening' : ''}`}
           style={{ background: isIntroSolid ? '#FDFAF6' : 'transparent' }}
           exit={{ opacity: 0 }}
         >
-          
-          {/* THE MAGIC RING */}
-          {showRing && (
-            <motion.div
-              className="magic-ring"
-              initial={{ scale: 0, y: 300 }}
-              animate={{ 
-                scale: animState === 'expanding' ? 80 : 1, 
-                y: 0 
-              }}
-              transition={{ 
-                duration: animState === 'flying' ? 0.8 : (animState === 'expanding' ? 1.2 : 0),
-                ease: animState === 'flying' ? [0.22, 1, 0.36, 1] : [0.6, 0.05, 0.01, 0.99] // Smooth fly in, sharp exponential expand
-              }}
-            />
-          )}
 
-          {/* CONTENT (Fades out first) */}
+          {/* TOP-CURTAIN + PETALS OVERLAY (covers until opened) */}
+          <div className={`reveal-overlay ${animState}`} aria-hidden={animState === 'done' ? 'true' : 'false'}>
+            <div className="curtain" />
+            <div className="petals">
+              {useMemo(() => {
+                const rosePalettes = [
+                  ['#F7D3D9', '#F1A7B8'], // blush -> rose
+                  ['#F6C4D1', '#E88AA6'],
+                  ['#F2B8C9', '#DE6B93'],
+                  ['#F0A1BA', '#D65A8E'],
+                  ['#F9D6DC', '#F2A6BB']
+                ];
+
+                const arr = [];
+                for (let i = 0; i < 28; i++) {
+                  const left = Math.round(Math.random() * 92);
+                  const drift = Math.round((Math.random() * 360) - 180);
+                  const delay = Math.round(Math.random() * 600);
+                  const duration = 900 + Math.round(Math.random() * 1000);
+                  const startRot = Math.round((Math.random() * 60) - 30);
+                  const endRot = Math.round(120 + Math.random() * 360);
+                  const scale = (0.8 + Math.random() * 0.9).toFixed(2);
+                  const palette = rosePalettes[Math.floor(Math.random() * rosePalettes.length)];
+                  arr.push({ left, drift, delay, duration, startRot, endRot, scale, idx: i, pc1: palette[0], pc2: palette[1] });
+                }
+                return arr;
+              }, []).map((p) => (
+                <svg
+                  key={p.idx}
+                  className={`petal petal--${(p.idx % 12) + 1}`}
+                  viewBox="0 0 20 40"
+                  width="20"
+                  height="40"
+                  style={{
+                    left: `${p.left}%`,
+                    animationDelay: `${p.delay}ms`,
+                    animationDuration: `${p.duration}ms`,
+                    ['--drift']: `${p.drift}px`,
+                    ['--start-rot']: `${p.startRot}deg`,
+                    ['--end-rot']: `${p.endRot}deg`,
+                    ['--scale']: p.scale,
+                    ['--pc1']: p.pc1,
+                    ['--pc2']: p.pc2,
+                  }}
+                >
+                  <defs>
+                    <linearGradient id={`g${p.idx}`} x1="0" x2="1" y1="0" y2="1">
+                      <stop offset="0%" stopColor={p.pc1} stopOpacity="1" />
+                      <stop offset="100%" stopColor={p.pc2} stopOpacity="1" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M10 1 C16 6,18 14,12 26 C8 32,4 30,3 25 C1 16,4 6,10 1 Z" fill={`url(#g${p.idx})`} stroke="rgba(0,0,0,0.06)" strokeWidth="0.4" />
+                </svg>
+              ))}
+            </div>
+          </div>
+
+          {/* CONTENT (visible initially; fades when animation starts) */}
           <AnimatePresence>
             {showContent && (
               <motion.div
                 className="intro__content-wrap"
                 initial={{ opacity: 1 }}
-                animate={{ opacity: animState === 'closing' ? 0 : 1 }}
+                animate={{ opacity: animState === 'folding' ? 0 : 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.4 }}
               >
@@ -92,9 +128,9 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
                   </p>
 
                   <h1 className="intro__names">
-                    <span>{groomName || 'Ranjith'}</span>
+                    <span className={animState === 'opening' ? 'shimmer' : ''}>{groomName || 'Ranjith'}</span>
                     <em>&</em>
-                    <span>{brideName || 'Nithya'}</span>
+                    <span className={animState === 'opening' ? 'shimmer' : ''}>{brideName || 'Nithya'}</span>
                   </h1>
 
                   <div className="intro__line" />
@@ -144,56 +180,80 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
               justify-content: center;
             }
 
-            /* THE MAGIC RING STYLES */
-            .magic-ring {
-              position: absolute;
-              top: 50%; left: 50%;
-              width: 120px; height: 120px;
-              margin-top: -60px; margin-left: -60px;
-              border: 5px solid #D4AF37; /* More metallic gold */
-              border-radius: 50%;
-              /* The 400vw box-shadow creates a solid background around the ring once the container becomes transparent */
-              box-shadow: 0 0 0 400vw #FDFAF6, 
-                          inset 0 4px 6px rgba(255,255,255,0.4), /* 3D highlight */
-                          inset 0 -4px 6px rgba(100,70,10,0.4), /* 3D shadow */
-                          0 4px 6px rgba(100,70,10,0.4),
-                          0 0 30px rgba(212,175,55,0.5);
-              z-index: 10;
+            /* Soft Fade + Gold Shimmer styles */
+            .intro.opening .intro__content-wrap { filter: blur(0.2px); }
+            .intro__content-wrap { transition: opacity 0.45s ease, transform 0.45s ease; }
+
+            .intro.opening .intro__content-wrap { opacity: 0; transform: scale(0.98); }
+
+            /* Gold shimmer for the names */
+            .intro__names { position: relative; overflow: visible; }
+            .intro__names .shimmer {
+              display: block;
+              background: linear-gradient(90deg, rgba(212,168,83,0) 0%, rgba(212,168,83,0.65) 50%, rgba(212,168,83,0) 100%);
+              background-size: 200% 100%;
+              -webkit-background-clip: text;
+              background-clip: text;
+              color: transparent;
+              animation: goldShimmer 0.9s ease forwards;
             }
 
-            /* THE DIAMOND */
-            .magic-ring::after {
-              content: '';
-              position: absolute;
-              top: -14px;
-              left: 50%;
-              transform: translateX(-50%) rotate(45deg);
-              width: 22px;
-              height: 22px;
-              background: linear-gradient(135deg, #ffffff 0%, #e0f7fa 50%, #ffffff 100%);
-              border: 1px solid #b2ebf2;
-              border-radius: 3px;
-              box-shadow: 0 0 15px rgba(255,255,255,0.9), 
-                          inset 0 0 8px rgba(255,255,255,1);
-              z-index: 11;
+            @keyframes goldShimmer {
+              0% { background-position: -100% 0; }
+              100% { background-position: 200% 0; }
             }
 
-            /* DIAMOND SPARKLE */
-            .magic-ring::before {
-              content: '✨';
+            /* Reveal overlay: top curtain that slides up + falling petals */
+            /* overlay hidden by default so it doesn't cover content until opening */
+            .reveal-overlay { position: absolute; inset: 0; z-index: 9998; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.25s ease; }
+            .reveal-overlay .curtain {
+              position: absolute; left: 0; right: 0; top: 0; height: 56%; background: linear-gradient(180deg,#f6f1ea 0%, #f3eee6 60%); box-shadow: 0 18px 40px rgba(0,0,0,0.08); transition: transform 0.85s cubic-bezier(.22,.9,.36,1);
+              transform: translateY(0%);
+            }
+            .intro.opening .reveal-overlay { pointer-events: auto; opacity: 1; visibility: visible; }
+            .intro.opening .reveal-overlay .curtain { transform: translateY(-110%); }
+
+            .petals { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+            .petal {
               position: absolute;
-              top: -26px;
-              left: 50%;
-              transform: translateX(-50%);
-              font-size: 14px;
-              color: white;
-              z-index: 12;
-              animation: sparkle 1s infinite alternate;
+              top: -10%;
+              width: 20px;
+              height: 40px;
+              transform-origin: center;
+              transform: translateZ(0) rotate(var(--start-rot,0deg)) scale(var(--scale,1));
+              opacity: 0;
+              animation-name: petalFall;
+              animation-timing-function: cubic-bezier(.22,.8,.18,1);
+              animation-fill-mode: forwards;
+              animation-play-state: paused;
+              filter: drop-shadow(0 6px 12px rgba(120,40,60,0.08));
+            }
+            .intro.opening .petal { animation-play-state: running; }
+
+            /* small variations for visual depth */
+            .petal--1 { transform: rotate(-10deg) scale(1.05); }
+            .petal--2 { transform: rotate(8deg) scale(0.95); }
+            .petal--3 { transform: rotate(-20deg) scale(1.1); }
+            .petal--4 { transform: rotate(4deg) scale(0.9); }
+            .petal--5 { transform: rotate(12deg) scale(1.0); }
+            .petal--6 { transform: rotate(-6deg) scale(0.95); }
+            .petal--7 { transform: rotate(16deg) scale(1.05); }
+            .petal--8 { transform: rotate(-4deg) scale(0.9); }
+            .petal--9 { transform: rotate(20deg) scale(1.08); }
+            .petal--10{ transform: rotate(-12deg) scale(0.92); }
+            .petal--11{ transform: rotate(6deg) scale(1.02); }
+            .petal--12{ transform: rotate(-8deg) scale(0.94); }
+
+            @keyframes petalFall {
+              0% { transform: translateY(-8vh) translateX(0px) rotate(var(--start-rot, 0deg)) scale(var(--scale, 1)); opacity: 1; }
+              40% { transform: translateY(30vh) translateX(calc(var(--drift) * 0.35)) rotate(calc(var(--start-rot,0deg) + var(--end-rot,0deg) * 0.35)) scale(calc(var(--scale,1) * 0.98)); opacity: 1; }
+              70% { transform: translateY(56vh) translateX(calc(var(--drift) * 0.7)) rotate(calc(var(--start-rot,0deg) + var(--end-rot,0deg) * 0.75)) scale(calc(var(--scale,1) * 0.9)); opacity: 0.95; }
+              100% { transform: translateY(100vh) translateX(var(--drift)) rotate(calc(var(--start-rot,0deg) + var(--end-rot,0deg))) scale(calc(var(--scale,1) * 0.82)); opacity: 0; }
             }
 
-            @keyframes sparkle {
-              0% { opacity: 0.5; transform: translateX(-50%) scale(0.8); }
-              100% { opacity: 1; transform: translateX(-50%) scale(1.2); }
+            @media (prefers-reduced-motion: reduce) {
+              .petal, .intro__names .shimmer { animation: none !important; }
+              .intro.opening .reveal-overlay .curtain { transition: none !important; transform: translateY(-110%) !important; }
             }
 
             /* CORNERS AND CONTENT STYLES */
@@ -331,6 +391,9 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
               color: var(--text-tertiary, rgba(44,44,44,0.38));
               text-transform: uppercase;
             }
+
+            /* remove folded-paper remnants */
+
 
             @media (max-width: 480px) {
               .intro__corner { width: 30px; height: 30px; }

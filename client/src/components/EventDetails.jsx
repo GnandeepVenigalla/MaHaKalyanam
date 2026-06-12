@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useSiteData } from '../context/SiteContext';
 import { FiMapPin, FiCalendar } from 'react-icons/fi';
 import { useLanguage } from '../context/LanguageContext';
-import downloadICS from '../utils/calendar';
+import { openICS } from '../utils/calendar';
 
 const defaultEvents = [
   {
@@ -205,7 +205,7 @@ export default function EventDetails() {
                           e.preventDefault();
                           const start = formatToET(ev.date, ev.time);
                           const end = addHoursToET(start, 3);
-                          downloadICS({
+                          openICS({
                             title: ev.name,
                             description: ev.description,
                             location: `${ev.venue || ''}${ev.address ? ' - ' + ev.address : ''}`,
