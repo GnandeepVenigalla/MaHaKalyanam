@@ -21,7 +21,6 @@ export default function Footer() {
         </p>
         <p className="footer__tag">#NIRA</p>
         <p className="footer__copy">{content.footer_message || t('footer.madeWith')}</p>
-        <p className="footer__copyright">&copy; {new Date().getFullYear()} GD Enterprises. All Rights Reserved.</p>
       </div>
 
       <style>{`
