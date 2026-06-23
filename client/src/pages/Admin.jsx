@@ -39,7 +39,7 @@ function Toast({ message, type, onClose }) {
 /* ═══════════════════════════════════════════════════════════════ */
 /*  Dashboard Tab                                                 */
 /* ═══════════════════════════════════════════════════════════════ */
-function DashboardTab({ rsvps, stats }) {
+function DashboardTab({ rsvps, stats, events }) {
   const statCards = [
     { label: 'Total RSVPs', value: stats.total || 0, color: '#6366f1' },
     { label: 'Attending', value: stats.attending || 0, color: '#22c55e' },
@@ -49,6 +49,27 @@ function DashboardTab({ rsvps, stats }) {
   ];
 
   const recent = [...(rsvps || [])].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
+
+  const eventStats = {};
+  (rsvps || []).forEach(r => {
+    if (r.attending === 'yes' && r.events) {
+      r.events.forEach(ev => {
+        if (!eventStats[ev.eventName]) {
+          eventStats[ev.eventName] = { adults: 0, kids: 0, total: 0 };
+        }
+        const a = ev.adults || 0;
+        const k = ev.kids || 0;
+        const g = ev.guests || 0;
+        if (typeof ev.adults === 'number' || typeof ev.kids === 'number') {
+          eventStats[ev.eventName].adults += a;
+          eventStats[ev.eventName].kids += k;
+          eventStats[ev.eventName].total += a + k;
+        } else {
+          eventStats[ev.eventName].total += g;
+        }
+      });
+    }
+  });
 
   return (
     <div className="admin-dashboard">
@@ -61,6 +82,33 @@ function DashboardTab({ rsvps, stats }) {
           </div>
         ))}
       </div>
+
+      {Object.keys(eventStats).length > 0 && (
+        <div className="admin-section">
+          <h3 className="admin-section-title">Event Counts & Cost</h3>
+          <div className="admin-event-stats" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
+            {Object.entries(eventStats).map(([name, stat]) => {
+              const evData = (events || []).find(e => e.name === name);
+              const costPerGuest = evData?.costPerGuest || 0;
+              const totalCost = stat.total * costPerGuest;
+              return (
+              <div key={name} style={{ background: '#ffffff', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', flex: '1 1 200px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '1rem', color: '#1a202c' }}>{name}</h4>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#718096' }}>
+                  <strong style={{ color: '#2d3748', fontSize: '1.2rem' }}>{stat.total}</strong> Total Guests<br/>
+                  ({stat.adults} Adults, {stat.kids} Kids)
+                </p>
+                {costPerGuest > 0 && (
+                  <p style={{ margin: '12px 0 0 0', paddingTop: '12px', borderTop: '1px solid #e2e8f0', fontSize: '0.9rem', color: '#22c55e', fontWeight: 'bold' }}>
+                    Cost: ₹{totalCost.toLocaleString()} (₹{costPerGuest}/guest)
+                  </p>
+                )}
+              </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="admin-section">
         <h3 className="admin-section-title">Recent RSVPs</h3>
@@ -112,7 +160,7 @@ function StatusBadge({ status }) {
 /* ═══════════════════════════════════════════════════════════════ */
 /*  Guest List Tab                                                */
 /* ═══════════════════════════════════════════════════════════════ */
-function GuestListTab({ rsvps, onDelete, onRefresh }) {
+function GuestListTab({ rsvps, events, onDelete, onRefresh }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
 
@@ -150,15 +198,25 @@ function GuestListTab({ rsvps, onDelete, onRefresh }) {
 
       {Object.keys(eventStats).length > 0 && (
         <div className="admin-event-stats" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
-          {Object.entries(eventStats).map(([name, stat]) => (
+          {Object.entries(eventStats).map(([name, stat]) => {
+            const evData = (events || []).find(e => e.name === name);
+            const costPerGuest = evData?.costPerGuest || 0;
+            const totalCost = stat.total * costPerGuest;
+            return (
             <div key={name} style={{ background: 'var(--color-ivory)', padding: '16px', borderRadius: '8px', border: '1px solid var(--color-champagne)', flex: '1 1 200px' }}>
               <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: 'var(--color-burgundy)' }}>{name}</h4>
               <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                 <strong>{stat.total}</strong> Total Guests<br/>
                 ({stat.adults} Adults, {stat.kids} Kids)
               </p>
+              {costPerGuest > 0 && (
+                <p style={{ margin: '8px 0 0 0', fontSize: '0.85rem', color: '#22c55e', fontWeight: 'bold' }}>
+                  Cost: ₹{totalCost.toLocaleString()} (₹{costPerGuest}/guest)
+                </p>
+              )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -314,32 +372,48 @@ function ContentEditorTab({ content, onSave }) {
 /* ═══════════════════════════════════════════════════════════════ */
 /*  Events Editor Tab                                             */
 /* ═══════════════════════════════════════════════════════════════ */
-function EventsEditorTab({ events, onAdd, onDelete, onRefresh }) {
-  const [form, setForm] = useState({ name: '', subtitle: '', date: '', time: '', venue: '', address: '', description: '', guests_attending: '', icon: '', map_link: '', calendar_link: '' });
+function EventsEditorTab({ events, rsvps, onAdd, onDelete, onRefresh }) {
+  const [form, setForm] = useState({ name: '', subtitle: '', date: '', time: '', venue: '', address: '', description: '', guests_attending: '', icon: '', map_link: '', calendar_link: '', costPerGuest: '' });
   const [adding, setAdding] = useState(false);
+  const [expandedEvent, setExpandedEvent] = useState(null);
 
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!form.name || !form.date) return;
     setAdding(true);
-    await onAdd(form);
-    setForm({ name: '', subtitle: '', date: '', time: '', venue: '', address: '', description: '', guests_attending: '', icon: '', map_link: '', calendar_link: '' });
+    const payload = { ...form, costPerGuest: Number(form.costPerGuest) || 0 };
+    await onAdd(payload);
+    setForm({ name: '', subtitle: '', date: '', time: '', venue: '', address: '', description: '', guests_attending: '', icon: '', map_link: '', calendar_link: '', costPerGuest: '' });
     setAdding(false);
   };
 
   const handleMove = async (index, dir) => {
     if (dir === -1 && index === 0) return;
     if (dir === 1 && index === events.length - 1) return;
-    
     const newEvents = [...events];
     const temp = newEvents[index];
     newEvents[index] = newEvents[index + dir];
     newEvents[index + dir] = temp;
-    
     const payload = newEvents.map((ev, i) => ({ ...ev, sort_order: i }));
     await updateEvents(payload);
     onRefresh();
   };
+
+  const eventAttendees = {};
+  (rsvps || []).forEach(r => {
+    if (r.attending === 'yes' && r.events && r.events.length > 0) {
+      r.events.forEach(ev => {
+        if (!eventAttendees[ev.eventName]) eventAttendees[ev.eventName] = [];
+        eventAttendees[ev.eventName].push({
+          name: r.name,
+          phone: r.phone,
+          adults: ev.adults || 0,
+          kids: ev.kids || 0,
+          total: (ev.adults || 0) + (ev.kids || 0),
+        });
+      });
+    }
+  });
 
   return (
     <div>
@@ -352,30 +426,114 @@ function EventsEditorTab({ events, onAdd, onDelete, onRefresh }) {
           <p className="admin-empty">No events yet</p>
         ) : (
           <div className="admin-cards-list">
-            {events.map((ev, i) => (
-              <div key={ev.id || ev._id} className="admin-list-card">
-                <div className="admin-list-card__info">
-                  <strong>{ev.icon} {ev.name}</strong>
-                  <span style={{color: 'var(--color-gold-dark)'}}>{ev.subtitle}</span>
-                  <span>{ev.date} {ev.time && `· ${ev.time}`}</span>
-                  <span>{ev.venue}</span>
-                  <span style={{fontSize: '0.8rem', color: '#888'}}>{ev.guestsAttending}</span>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <button className="admin-icon-btn" onClick={() => handleMove(i, -1)} disabled={i === 0}>
-                      <FiArrowUp />
-                    </button>
-                    <button className="admin-icon-btn" onClick={() => handleMove(i, 1)} disabled={i === events.length - 1}>
-                      <FiArrowDown />
-                    </button>
+            {events.map((ev, i) => {
+              const evId = ev.id || ev._id;
+              const attendees = eventAttendees[ev.name] || [];
+              const totalGuests = attendees.reduce((sum, a) => sum + a.total, 0);
+              const totalAdults = attendees.reduce((sum, a) => sum + a.adults, 0);
+              const totalKids = attendees.reduce((sum, a) => sum + a.kids, 0);
+              const isExpanded = expandedEvent === evId;
+
+              return (
+                <div key={evId} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+
+                  {/* ── Event header row ── */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', gap: '16px' }}>
+                    <div className="admin-list-card__info" style={{ flex: 1, margin: 0 }}>
+                      <strong>{ev.icon} {ev.name}</strong>
+                      <span style={{color: 'var(--color-gold-dark)'}}>{ev.subtitle}</span>
+                      <span>{ev.date} {ev.time && `· ${ev.time}`}</span>
+                      <span>{ev.venue}</span>
+                      {ev.costPerGuest > 0 && <span style={{fontSize: '0.8rem', color: '#22c55e', fontWeight: 'bold'}}>Cost per guest: ₹{ev.costPerGuest}</span>}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+                      <button
+                        onClick={() => setExpandedEvent(isExpanded ? null : evId)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '6px',
+                          background: attendees.length > 0 ? '#6366f112' : '#f4f6f9',
+                          color: attendees.length > 0 ? '#6366f1' : '#a0aec0',
+                          border: `1px solid ${attendees.length > 0 ? '#6366f130' : '#e2e8f0'}`,
+                          borderRadius: '20px', padding: '7px 14px',
+                          fontSize: '0.82rem', fontWeight: '600', cursor: 'pointer',
+                          transition: 'all 0.2s', whiteSpace: 'nowrap',
+                        }}
+                        title="View attendees"
+                      >
+                        <FiUsers style={{ fontSize: '0.9rem' }} />
+                        {totalGuests} guests · {attendees.length} RSVPs
+                        <span style={{ marginLeft: '4px', fontSize: '0.65rem', opacity: 0.7 }}>
+                          {isExpanded ? '▲' : '▼'}
+                        </span>
+                      </button>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <button className="admin-icon-btn" onClick={() => handleMove(i, -1)} disabled={i === 0}><FiArrowUp /></button>
+                        <button className="admin-icon-btn" onClick={() => handleMove(i, 1)} disabled={i === events.length - 1}><FiArrowDown /></button>
+                      </div>
+                      <button className="admin-icon-btn admin-icon-btn--danger" onClick={() => onDelete(ev._id || ev.id)}>
+                        <FiTrash2 />
+                      </button>
+                    </div>
                   </div>
-                  <button className="admin-icon-btn admin-icon-btn--danger" onClick={() => onDelete(ev._id || ev.id)} style={{ marginLeft: '8px' }}>
-                    <FiTrash2 />
-                  </button>
+
+                  {/* ── Expandable attendee panel ── */}
+                  {isExpanded && (
+                    <div style={{ borderTop: '2px solid #eef2ff', padding: '20px', background: '#f8f9ff' }}>
+
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px' }}>
+                        {[
+                          { label: 'Total RSVPs', value: attendees.length, color: '#6366f1', bg: '#6366f110' },
+                          { label: 'Total Guests', value: totalGuests,    color: '#0ea5e9', bg: '#0ea5e910' },
+                          { label: 'Adults',       value: totalAdults,    color: '#f59e0b', bg: '#f59e0b10' },
+                          { label: 'Kids',         value: totalKids,      color: '#8b5cf6', bg: '#8b5cf610' },
+                          ...(ev.costPerGuest > 0
+                            ? [{ label: 'Est. Cost', value: `₹${(totalGuests * ev.costPerGuest).toLocaleString()}`, color: '#22c55e', bg: '#22c55e10' }]
+                            : []
+                          ),
+                        ].map(chip => (
+                          <div key={chip.label} style={{ background: chip.bg, border: `1px solid ${chip.color}22`, borderRadius: '10px', padding: '10px 16px', textAlign: 'center', minWidth: '80px' }}>
+                            <div style={{ fontSize: '1.3rem', fontWeight: '700', color: chip.color, lineHeight: 1 }}>{chip.value}</div>
+                            <div style={{ fontSize: '0.68rem', color: '#718096', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '4px' }}>{chip.label}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {attendees.length === 0 ? (
+                        <p style={{ color: '#a0aec0', fontStyle: 'italic', textAlign: 'center', padding: '16px' }}>No RSVPs for this event yet</p>
+                      ) : (
+                        <div style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px 60px 60px 60px', gap: '0', padding: '9px 14px', background: '#f7fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.68rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#718096' }}>
+                            <span>Name</span>
+                            <span>Phone</span>
+                            <span style={{ textAlign: 'center' }}>Adults</span>
+                            <span style={{ textAlign: 'center' }}>Kids</span>
+                            <span style={{ textAlign: 'center' }}>Total</span>
+                          </div>
+                          {attendees.map((a, idx) => (
+                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 130px 60px 60px 60px', gap: '0', padding: '10px 14px', background: idx % 2 === 0 ? '#fff' : '#fafcff', borderBottom: idx < attendees.length - 1 ? '1px solid #f0f4f8' : 'none', alignItems: 'center' }}>
+                              <div style={{ fontWeight: '600', fontSize: '0.88rem', color: '#2d3748' }}>{a.name}</div>
+                              <div style={{ fontSize: '0.8rem', color: '#718096' }}>{a.phone || '—'}</div>
+                              <div style={{ textAlign: 'center', fontWeight: '600', color: '#f59e0b', fontSize: '0.9rem' }}>{a.adults}</div>
+                              <div style={{ textAlign: 'center', fontWeight: '600', color: '#8b5cf6', fontSize: '0.9rem' }}>{a.kids}</div>
+                              <div style={{ textAlign: 'center', fontWeight: '700', color: '#1a202c', fontSize: '0.9rem' }}>{a.total}</div>
+                            </div>
+                          ))}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px 60px 60px 60px', gap: '0', padding: '10px 14px', background: '#f7fafc', borderTop: '2px solid #e2e8f0', fontSize: '0.82rem', fontWeight: '700', color: '#2d3748' }}>
+                            <span>Total ({attendees.length} RSVPs)</span>
+                            <span></span>
+                            <span style={{ textAlign: 'center', color: '#f59e0b' }}>{totalAdults}</span>
+                            <span style={{ textAlign: 'center', color: '#8b5cf6' }}>{totalKids}</span>
+                            <span style={{ textAlign: 'center', color: '#0ea5e9' }}>{totalGuests}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -395,6 +553,7 @@ function EventsEditorTab({ events, onAdd, onDelete, onRefresh }) {
             <input placeholder="Icon Emoji (e.g. 💍)" value={form.icon} onChange={e => setForm({...form, icon: e.target.value})} />
             <input placeholder="Map Link URL" value={form.map_link} onChange={e => setForm({...form, map_link: e.target.value})} />
             <input placeholder="Calendar Link URL" value={form.calendar_link} onChange={e => setForm({...form, calendar_link: e.target.value})} />
+            <input placeholder="Cost per Guest (₹)" type="number" value={form.costPerGuest} onChange={e => setForm({...form, costPerGuest: e.target.value})} />
             <input placeholder="Description" style={{gridColumn: '1 / -1'}} value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
           </div>
           <button type="submit" className="admin-btn admin-btn--primary" disabled={adding} style={{marginTop: '16px'}}>
@@ -1238,10 +1397,10 @@ export default function Admin() {
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'dashboard': return <DashboardTab rsvps={rsvps} stats={stats} />;
-      case 'guests': return <GuestListTab rsvps={rsvps} onDelete={handleDeleteRSVP} onRefresh={loadData} />;
+      case 'dashboard': return <DashboardTab rsvps={rsvps} stats={stats} events={events} />;
+      case 'guests': return <GuestListTab rsvps={rsvps} events={events} onDelete={handleDeleteRSVP} onRefresh={loadData} />;
       case 'content': return <ContentEditorTab content={content} onSave={handleSaveContent} />;
-      case 'events': return <EventsEditorTab events={events} onAdd={handleAddEvent} onDelete={handleDeleteEvent} onRefresh={loadData} />;
+      case 'events': return <EventsEditorTab events={events} rsvps={rsvps} onAdd={handleAddEvent} onDelete={handleDeleteEvent} onRefresh={loadData} />;
       case 'menu': return <MenuEditorTab menu={menu} onAdd={handleAddMenuItem} onDelete={handleDeleteMenuItem} />;
       case 'media': return <MediaEditorTab media={media} onAdd={handleAddMedia} onDelete={handleDeleteMedia} />;
       case 'gifts': return <GiftsEditorTab gifts={gifts} onAdd={handleAddGift} onDelete={handleDeleteGift} />;

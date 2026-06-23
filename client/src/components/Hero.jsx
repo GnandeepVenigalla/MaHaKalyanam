@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useSiteData } from '../context/SiteContext';
-import ScratchCard from './ScratchCard';
 import { useLanguage } from '../context/LanguageContext';
 
 function formatDateParts(dateStr) {
@@ -64,13 +63,11 @@ export default function Hero() {
         </div>
 
         <motion.div className="hero__date-box" {...fadeUp(1.0)}>
-          <ScratchCard>
-            <div className="hero__date-pill">
-              <span className="hero__date-day">{dp.weekday}</span>
-              <span className="hero__date-divider">|</span>
-              <span className="hero__date-main">{dp.month} {dp.day}, {dp.year}</span>
-            </div>
-          </ScratchCard>
+          <div className="hero__date-pill">
+            <span className="hero__date-day">{dp.weekday}</span>
+            <span className="hero__date-divider">|</span>
+            <span className="hero__date-main">{dp.month} {dp.day}, {dp.year}</span>
+          </div>
         </motion.div>
 
       </div>

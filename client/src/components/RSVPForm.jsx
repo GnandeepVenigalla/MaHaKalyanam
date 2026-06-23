@@ -383,20 +383,24 @@ export default function RSVPForm() {
         }
         .rsvp-event-card.active .rsvp-ctrl-val { color: #FFFFFF; opacity: 1; }
 
-        .rsvp-submit-wrap { text-align: center; margin-top: 60px; display: flex; justify-content: center; }
+        .rsvp-submit-wrap { text-align: center; margin-top: 60px; display: flex; justify-content: center; align-items: center; }
         .rsvp-submit { 
-          width: 100%; 
+          display: inline-block;
+          width: auto;
+          min-width: 220px;
           max-width: 380px; 
           background: #1A1A1A; 
           color: #FFFFFF; 
           border-radius: 50px; 
-          padding: 20px; 
+          padding: 20px 48px; 
           border: none;
           font-family: var(--font-body);
           font-size: 0.85rem;
           font-weight: 600;
           letter-spacing: 0.2em;
           text-transform: uppercase;
+          cursor: pointer;
+          transition: background 0.3s ease, transform 0.2s ease;
         }
         .rsvp-submit:hover:not(:disabled) { background: #000000; transform: translateY(-2px); }
         .rsvp-error { color: #ef4444; font-size: 0.9rem; text-align: center; margin-top: 24px; }

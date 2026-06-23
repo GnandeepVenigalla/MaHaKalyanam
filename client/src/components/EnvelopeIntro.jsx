@@ -1,32 +1,85 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
-  const { language, setLanguage, t } = useLanguage();
-  // States: idle -> opening -> done
-  const [animState, setAnimState] = useState('idle');
+/* ─── Draw a realistic flower petal on canvas ─── */
+function drawPetal(ctx, x, y, w, h, rotation, color1, color2, opacity) {
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
 
-  // Respect user's reduced motion preference
-  const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Gradient fill for 3D petal look
+  const grad = ctx.createLinearGradient(-w * 0.3, -h * 0.5, w * 0.4, h * 0.5);
+  grad.addColorStop(0, color1);
+  grad.addColorStop(0.6, color2);
+  grad.addColorStop(1, color2 + 'cc');
+
+  // Draw teardrop / petal shape using bezier curves
+  ctx.beginPath();
+  ctx.moveTo(0, -h / 2);                               // tip (top)
+  ctx.bezierCurveTo(
+    w * 0.7, -h * 0.35,                               // right ctrl 1
+    w * 0.65, h * 0.1,                                // right ctrl 2
+    0, h / 2                                           // bottom
+  );
+  ctx.bezierCurveTo(
+    -w * 0.65, h * 0.1,                               // left ctrl 1
+    -w * 0.7, -h * 0.35,                              // left ctrl 2
+    0, -h / 2                                          // back to tip
+  );
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Subtle center vein
+  ctx.beginPath();
+  ctx.moveTo(0, -h * 0.45);
+  ctx.quadraticCurveTo(w * 0.05, 0, 0, h * 0.45);
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = w * 0.06;
+  ctx.stroke();
+
+  // Slight highlight near top
+  const highlight = ctx.createRadialGradient(-w * 0.2, -h * 0.25, 0, -w * 0.2, -h * 0.25, w * 0.5);
+  highlight.addColorStop(0, 'rgba(255,255,255,0.28)');
+  highlight.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.beginPath();
+  ctx.moveTo(0, -h / 2);
+  ctx.bezierCurveTo(w * 0.7, -h * 0.35, w * 0.65, h * 0.1, 0, h / 2);
+  ctx.bezierCurveTo(-w * 0.65, h * 0.1, -w * 0.7, -h * 0.35, 0, -h / 2);
+  ctx.fillStyle = highlight;
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/* ─── Petal color palettes ─── */
+const PALETTES = [
+  ['#FFB3C9', '#E8607A'],
+  ['#FFC8D8', '#F0809A'],
+  ['#F9A0C0', '#DC5080'],
+  ['#FFD0E0', '#F09EB8'],
+  ['#FFA8C0', '#E06888'],
+  ['#FFBFD5', '#E87898'],
+  ['#F7C8D8', '#D85878'],
+  ['#FFD8E8', '#F0A0C0'],
+];
+
+export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
+  const { t } = useLanguage();
+  const [animState, setAnimState] = useState('idle');
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+  const petalsRef = useRef([]);
 
   const handleOpen = () => {
     if (animState !== 'idle') return;
-    if (prefersReduced) {
-      // Skip animation for reduced-motion users
-      setAnimState('done');
-      onOpen();
-      return;
-    }
-
     setAnimState('opening');
-
-    // petals + curtain timing (curtain slides up while petals fall)
-    const TOTAL_MS = 900;
     setTimeout(() => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       setAnimState('done');
       onOpen();
-    }, TOTAL_MS);
+    }, 4000);
   };
 
   useEffect(() => {
@@ -35,217 +88,170 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
     return () => window.removeEventListener('keydown', h);
   }, [animState]);
 
-  const isIntroSolid = animState !== 'done';
-  const showContent = animState === 'idle';
+  useEffect(() => {
+    if (animState !== 'opening') return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Spawn petals — staggered so they don't all appear at once
+    const palette = PALETTES;
+    petalsRef.current = Array.from({ length: 48 }, (_, i) => {
+      const p = palette[i % palette.length];
+      return {
+        x: Math.random() * canvas.width,
+        y: -40 - Math.random() * canvas.height * 0.6, // staggered start heights
+        w: 14 + Math.random() * 16,
+        h: 22 + Math.random() * 24,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.045,
+        fallSpeed: 1.2 + Math.random() * 1.8,
+        swayOffset: Math.random() * Math.PI * 2,
+        swaySpeed: 0.018 + Math.random() * 0.022,
+        swayAmp: 0.6 + Math.random() * 1.0,
+        color1: p[0],
+        color2: p[1],
+        opacity: 0.78 + Math.random() * 0.22,
+        t: 0,
+      };
+    });
+
+    let alive = true;
+    const render = () => {
+      if (!alive) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      petalsRef.current.forEach(p => {
+        p.t += 1;
+        // Sinusoidal horizontal sway — makes it look like gentle breeze
+        p.x += Math.sin(p.swayOffset + p.t * p.swaySpeed) * p.swayAmp;
+        p.y += p.fallSpeed;
+        p.rotation += p.rotSpeed;
+
+        // Fade out near bottom
+        const fadeStart = canvas.height * 0.8;
+        const fadeEnd = canvas.height + 20;
+        const fadeOpacity = p.y > fadeStart
+          ? p.opacity * (1 - (p.y - fadeStart) / (fadeEnd - fadeStart))
+          : p.opacity;
+
+        if (fadeOpacity > 0) {
+          drawPetal(ctx, p.x, p.y, p.w, p.h, p.rotation, p.color1, p.color2, Math.max(0, fadeOpacity));
+        }
+
+        // Recycle petal when it exits screen
+        if (p.y > canvas.height + 40) {
+          p.y = -40;
+          p.x = Math.random() * canvas.width;
+          p.swayOffset = Math.random() * Math.PI * 2;
+        }
+      });
+
+      rafRef.current = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      alive = false;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, [animState]);
 
   return (
     <AnimatePresence>
       {animState !== 'done' && (
         <motion.div
-          className={`intro ${animState === 'opening' ? 'opening' : ''}`}
-          style={{ background: isIntroSolid ? '#FDFAF6' : 'transparent' }}
-          exit={{ opacity: 0 }}
+          className="intro"
+          exit={{ opacity: 0, transition: { duration: 0.6 } }}
         >
+          {/* Canvas for petal rain — only visible during animation */}
+          <canvas
+            ref={canvasRef}
+            className="petal-canvas"
+            style={{ opacity: animState === 'opening' ? 1 : 0 }}
+          />
 
-          {/* TOP-CURTAIN + PETALS OVERLAY (covers until opened) */}
-          <div className={`reveal-overlay ${animState}`} aria-hidden={animState === 'done' ? 'true' : 'false'}>
-            <div className="curtain" />
-            <div className="petals">
-              {useMemo(() => {
-                const rosePalettes = [
-                  ['#F7D3D9', '#F1A7B8'], // blush -> rose
-                  ['#F6C4D1', '#E88AA6'],
-                  ['#F2B8C9', '#DE6B93'],
-                  ['#F0A1BA', '#D65A8E'],
-                  ['#F9D6DC', '#F2A6BB']
-                ];
+          {/* Main invitation content */}
+          <motion.div
+            className="intro__content-wrap"
+            animate={{
+              opacity: animState === 'opening' ? 0 : 1,
+              scale: animState === 'opening' ? 1.04 : 1,
+            }}
+            transition={{ duration: 0.7, ease: 'easeInOut' }}
+          >
+            {/* Corner decorations */}
+            <div className="intro__corner intro__corner--tl" />
+            <div className="intro__corner intro__corner--tr" />
+            <div className="intro__corner intro__corner--bl" />
+            <div className="intro__corner intro__corner--br" />
 
-                const arr = [];
-                for (let i = 0; i < 28; i++) {
-                  const left = Math.round(Math.random() * 92);
-                  const drift = Math.round((Math.random() * 360) - 180);
-                  const delay = Math.round(Math.random() * 600);
-                  const duration = 900 + Math.round(Math.random() * 1000);
-                  const startRot = Math.round((Math.random() * 60) - 30);
-                  const endRot = Math.round(120 + Math.random() * 360);
-                  const scale = (0.8 + Math.random() * 0.9).toFixed(2);
-                  const palette = rosePalettes[Math.floor(Math.random() * rosePalettes.length)];
-                  arr.push({ left, drift, delay, duration, startRot, endRot, scale, idx: i, pc1: palette[0], pc2: palette[1] });
-                }
-                return arr;
-              }, []).map((p) => (
-                <svg
-                  key={p.idx}
-                  className={`petal petal--${(p.idx % 12) + 1}`}
-                  viewBox="0 0 20 40"
-                  width="20"
-                  height="40"
-                  style={{
-                    left: `${p.left}%`,
-                    animationDelay: `${p.delay}ms`,
-                    animationDuration: `${p.duration}ms`,
-                    ['--drift']: `${p.drift}px`,
-                    ['--start-rot']: `${p.startRot}deg`,
-                    ['--end-rot']: `${p.endRot}deg`,
-                    ['--scale']: p.scale,
-                    ['--pc1']: p.pc1,
-                    ['--pc2']: p.pc2,
-                  }}
-                >
-                  <defs>
-                    <linearGradient id={`g${p.idx}`} x1="0" x2="1" y1="0" y2="1">
-                      <stop offset="0%" stopColor={p.pc1} stopOpacity="1" />
-                      <stop offset="100%" stopColor={p.pc2} stopOpacity="1" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M10 1 C16 6,18 14,12 26 C8 32,4 30,3 25 C1 16,4 6,10 1 Z" fill={`url(#g${p.idx})`} stroke="rgba(0,0,0,0.06)" strokeWidth="0.4" />
-                </svg>
-              ))}
+            <div className="intro__content">
+              <div className="intro__ganesh" />
+
+              <p className="intro__label">{t('intro.invited')}</p>
+
+              <h1 className="intro__names">
+                <span>{groomName || 'Ranjith'}</span>
+                <em>&</em>
+                <span>{brideName || 'Nithya'}</span>
+              </h1>
+
+              <div className="intro__line" />
+
+              <button className="intro__btn" onClick={handleOpen}>
+                {t('intro.open')}
+              </button>
             </div>
-          </div>
 
-          {/* CONTENT (visible initially; fades when animation starts) */}
-          <AnimatePresence>
-            {showContent && (
-              <motion.div
-                className="intro__content-wrap"
-                initial={{ opacity: 1 }}
-                animate={{ opacity: animState === 'folding' ? 0 : 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4 }}
-              >
-                {/* Corner lines */}
-                <div className="intro__corner intro__corner--tl" />
-                <div className="intro__corner intro__corner--tr" />
-                <div className="intro__corner intro__corner--bl" />
-                <div className="intro__corner intro__corner--br" />
-
-                <div className="intro__content">
-                  <div className="intro__ganesh" />
-
-                  <p className="intro__label">
-                    {t('intro.invited')}
-                  </p>
-
-                  <h1 className="intro__names">
-                    <span className={animState === 'opening' ? 'shimmer' : ''}>{groomName || 'Ranjith'}</span>
-                    <em>&</em>
-                    <span className={animState === 'opening' ? 'shimmer' : ''}>{brideName || 'Nithya'}</span>
-                  </h1>
-
-                  <div className="intro__line" />
-
-                  <button className="intro__btn" onClick={handleOpen}>
-                    {t('intro.open')}
-                  </button>
-                </div>
-
-                <p className="intro__hashtag">#NIRA</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <p className="intro__hashtag">#NIRA</p>
+          </motion.div>
 
           <style>{`
             .intro {
               position: fixed;
               inset: 0;
               z-index: 9999;
+              background: #FDFAF6;
               display: flex;
               align-items: center;
               justify-content: center;
               overflow: hidden;
             }
 
-            .intro__content-wrap {
+            .petal-canvas {
               position: absolute;
               inset: 0;
+              pointer-events: none;
+              transition: opacity 0.4s ease;
+              z-index: 1;
+            }
+
+            .intro__content-wrap {
+              position: relative;
+              z-index: 10;
               display: flex;
+              flex-direction: column;
               align-items: center;
-              justify-content: center;
+              width: 100%;
             }
 
-            /* Soft Fade + Gold Shimmer styles */
-            .intro.opening .intro__content-wrap { filter: blur(0.2px); }
-            .intro__content-wrap { transition: opacity 0.45s ease, transform 0.45s ease; }
-
-            .intro.opening .intro__content-wrap { opacity: 0; transform: scale(0.98); }
-
-            /* Gold shimmer for the names */
-            .intro__names { position: relative; overflow: visible; }
-            .intro__names .shimmer {
-              display: block;
-              background: linear-gradient(90deg, rgba(212,168,83,0) 0%, rgba(212,168,83,0.65) 50%, rgba(212,168,83,0) 100%);
-              background-size: 200% 100%;
-              -webkit-background-clip: text;
-              background-clip: text;
-              color: transparent;
-              animation: goldShimmer 0.9s ease forwards;
-            }
-
-            @keyframes goldShimmer {
-              0% { background-position: -100% 0; }
-              100% { background-position: 200% 0; }
-            }
-
-            /* Reveal overlay: top curtain that slides up + falling petals */
-            /* overlay hidden by default so it doesn't cover content until opening */
-            .reveal-overlay { position: absolute; inset: 0; z-index: 9998; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.25s ease; }
-            .reveal-overlay .curtain {
-              position: absolute; left: 0; right: 0; top: 0; height: 56%; background: linear-gradient(180deg,#f6f1ea 0%, #f3eee6 60%); box-shadow: 0 18px 40px rgba(0,0,0,0.08); transition: transform 0.85s cubic-bezier(.22,.9,.36,1);
-              transform: translateY(0%);
-            }
-            .intro.opening .reveal-overlay { pointer-events: auto; opacity: 1; visibility: visible; }
-            .intro.opening .reveal-overlay .curtain { transform: translateY(-110%); }
-
-            .petals { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-            .petal {
-              position: absolute;
-              top: -10%;
-              width: 20px;
-              height: 40px;
-              transform-origin: center;
-              transform: translateZ(0) rotate(var(--start-rot,0deg)) scale(var(--scale,1));
-              opacity: 0;
-              animation-name: petalFall;
-              animation-timing-function: cubic-bezier(.22,.8,.18,1);
-              animation-fill-mode: forwards;
-              animation-play-state: paused;
-              filter: drop-shadow(0 6px 12px rgba(120,40,60,0.08));
-            }
-            .intro.opening .petal { animation-play-state: running; }
-
-            /* small variations for visual depth */
-            .petal--1 { transform: rotate(-10deg) scale(1.05); }
-            .petal--2 { transform: rotate(8deg) scale(0.95); }
-            .petal--3 { transform: rotate(-20deg) scale(1.1); }
-            .petal--4 { transform: rotate(4deg) scale(0.9); }
-            .petal--5 { transform: rotate(12deg) scale(1.0); }
-            .petal--6 { transform: rotate(-6deg) scale(0.95); }
-            .petal--7 { transform: rotate(16deg) scale(1.05); }
-            .petal--8 { transform: rotate(-4deg) scale(0.9); }
-            .petal--9 { transform: rotate(20deg) scale(1.08); }
-            .petal--10{ transform: rotate(-12deg) scale(0.92); }
-            .petal--11{ transform: rotate(6deg) scale(1.02); }
-            .petal--12{ transform: rotate(-8deg) scale(0.94); }
-
-            @keyframes petalFall {
-              0% { transform: translateY(-8vh) translateX(0px) rotate(var(--start-rot, 0deg)) scale(var(--scale, 1)); opacity: 1; }
-              40% { transform: translateY(30vh) translateX(calc(var(--drift) * 0.35)) rotate(calc(var(--start-rot,0deg) + var(--end-rot,0deg) * 0.35)) scale(calc(var(--scale,1) * 0.98)); opacity: 1; }
-              70% { transform: translateY(56vh) translateX(calc(var(--drift) * 0.7)) rotate(calc(var(--start-rot,0deg) + var(--end-rot,0deg) * 0.75)) scale(calc(var(--scale,1) * 0.9)); opacity: 0.95; }
-              100% { transform: translateY(100vh) translateX(var(--drift)) rotate(calc(var(--start-rot,0deg) + var(--end-rot,0deg))) scale(calc(var(--scale,1) * 0.82)); opacity: 0; }
-            }
-
-            @media (prefers-reduced-motion: reduce) {
-              .petal, .intro__names .shimmer { animation: none !important; }
-              .intro.opening .reveal-overlay .curtain { transition: none !important; transform: translateY(-110%) !important; }
-            }
-
-            /* CORNERS AND CONTENT STYLES */
+            /* Corner ornaments */
             .intro__corner {
               position: absolute;
               width: 60px;
               height: 60px;
-              border-color: var(--cream-dark, #E0D5C7);
+              border-color: #E0D5C7;
               border-style: solid;
             }
             .intro__corner--tl { top: 32px; left: 32px; border-width: 1px 0 0 1px; }
@@ -263,23 +269,27 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
             }
 
             .intro__ganesh {
-              width: 48px; height: 48px;
+              width: 48px;
+              height: 48px;
               margin: 0 auto 28px;
-              background-color: #8C8C8C; 
+              background-color: #8C8C8C;
               -webkit-mask-image: url('/ganesha.png');
               mask-image: url('/ganesha.png');
-              -webkit-mask-size: contain; mask-size: contain;
-              -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
-              -webkit-mask-position: center; mask-position: center;
+              -webkit-mask-size: contain;
+              mask-size: contain;
+              -webkit-mask-repeat: no-repeat;
+              mask-repeat: no-repeat;
+              -webkit-mask-position: center;
+              mask-position: center;
               opacity: 0.5;
             }
 
             .intro__label {
               font-family: var(--font-body, 'Sora', sans-serif);
-              font-size: 0.75rem;
+              font-size: 0.72rem;
               font-weight: 500;
-              color: #A69260; 
-              letter-spacing: 0.25em;
+              color: #A69260;
+              letter-spacing: 0.28em;
               text-transform: uppercase;
               margin-bottom: 20px;
             }
@@ -289,7 +299,7 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
               font-style: italic;
               font-size: clamp(3rem, 8vw, 5rem);
               font-weight: 400;
-              color: var(--charcoal, #2C2C2C);
+              color: #2C2C2C;
               line-height: 1.15;
               margin-bottom: 24px;
             }
@@ -300,14 +310,14 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
               font-family: var(--font-display, 'Fraunces', serif);
               font-style: normal;
               font-size: 0.5em;
-              color: var(--copper, #B87D4B);
-              margin: 20px 0;
+              color: #B87D4B;
+              margin: 16px 0;
             }
 
             .intro__line {
               width: 50px;
               height: 1px;
-              background: var(--copper, #B87D4B);
+              background: #B87D4B;
               margin: 0 auto 32px;
             }
 
@@ -317,51 +327,19 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
               font-weight: 600;
               letter-spacing: 0.3em;
               text-transform: uppercase;
-              color: var(--white, #FDFAF6);
-              background: #5C6851; /* Olive green */
+              color: #FDFAF6;
+              background: #5C6851;
               padding: 16px 40px;
               border: none;
               border-radius: 100px;
               cursor: pointer;
-              transition: background 0.3s ease, transform 0.2s ease;
+              transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+              box-shadow: 0 4px 20px rgba(92, 104, 81, 0.3);
             }
-            .intro__btn:hover { background: #454E41; transform: translateY(-2px); }
-
-            .intro__lang-toggle {
-              display: flex;
-              align-items: center;
-              gap: 12px;
-              margin-top: 28px;
-            }
-
-            .intro__lang-btn {
-              font-family: var(--font-body, 'Sora', sans-serif);
-              font-size: 0.75rem;
-              font-weight: 500;
-              letter-spacing: 0.15em;
-              color: rgba(44, 44, 44, 0.4);
-              background: none;
-              border: none;
-              cursor: pointer;
-              padding: 6px 12px;
-              border-radius: 20px;
-              transition: all 0.3s ease;
-            }
-
-            .intro__lang-btn--active {
-              color: #5C6851;
-              background: rgba(92, 104, 81, 0.1);
-              font-weight: 600;
-            }
-
-            .intro__lang-btn:hover {
-              color: #5C6851;
-            }
-
-            .intro__lang-divider {
-              color: rgba(44, 44, 44, 0.2);
-              font-size: 0.8rem;
-              font-weight: 300;
+            .intro__btn:hover {
+              background: #454E41;
+              transform: translateY(-2px);
+              box-shadow: 0 6px 24px rgba(92, 104, 81, 0.4);
             }
 
             .intro__hashtag {
@@ -372,12 +350,10 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
               font-family: var(--font-body, 'Sora', sans-serif);
               font-size: 0.6rem;
               letter-spacing: 0.3em;
-              color: var(--text-tertiary, rgba(44,44,44,0.38));
+              color: rgba(44, 44, 44, 0.38);
               text-transform: uppercase;
+              white-space: nowrap;
             }
-
-            /* remove folded-paper remnants */
-
 
             @media (max-width: 480px) {
               .intro__corner { width: 30px; height: 30px; }
@@ -387,6 +363,10 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
               .intro__corner--tr, .intro__corner--br { right: 16px; }
               .intro__names { font-size: 2.8rem; }
               .intro__btn { padding: 14px 32px; font-size: 0.6rem; }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+              .petal-canvas { display: none !important; }
             }
           `}</style>
         </motion.div>

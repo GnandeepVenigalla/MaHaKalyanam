@@ -25,6 +25,7 @@ const eventSchema = new mongoose.Schema({
   icon:            { type: String },
   mapLink:         { type: String },
   calendarLink:    { type: String },
+  costPerGuest:    { type: Number, default: 0 },
   sortOrder:       { type: Number, default: 0 },
 });
 
