@@ -66,6 +66,14 @@ export async function deleteEvent(id) {
   });
 }
 
+export async function patchEvent(id, data) {
+  return request(`/api/events/${id}`, {
+    method: 'PATCH',
+    headers: getHeaders(true),
+    body: JSON.stringify(data),
+  });
+}
+
 // ─── Food Menu ───────────────────────────────────────────
 export async function fetchMenu() {
   return request('/api/menu');

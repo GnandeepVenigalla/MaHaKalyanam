@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { useSiteData } from '../context/SiteContext';
 import { FiMapPin, FiCalendar } from 'react-icons/fi';
 import { useLanguage } from '../context/LanguageContext';
-import { openICS } from '../utils/calendar';
 
 const defaultEvents = [
   {
@@ -20,20 +19,46 @@ const defaultEvents = [
   }
 ];
 
-function parseDateForTimeline(dateStr) {
-  if (!dateStr) return { bigDay: '19', month: 'JUN', weekday: 'FRIDAY' };
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d)) return { bigDay: dateStr.substring(0, 2), month: 'MTH', weekday: 'DAY' };
-    return {
-      bigDay: d.getDate(),
-      month: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
-      weekday: d.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase(),
-    };
-  } catch {
-    return { bigDay: '19', month: 'JUN', weekday: 'FRIDAY' };
+const MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+
+function parseAnyDate(dateStr) {
+  if (!dateStr) return null;
+  let d = new Date(dateStr);
+  if (!isNaN(d)) return d;
+
+  const cleaned = dateStr.replace(/(\d+)(st|nd|rd|th)/gi, '$1').trim();
+  d = new Date(cleaned);
+  if (!isNaN(d)) return d;
+
+  const m = cleaned.match(/^(\d{1,2})\s+([a-zA-Z]+)(?:\s+(\d{4}))?/);
+  if (m) {
+    const day = parseInt(m[1], 10);
+    const monthIdx = MONTHS.indexOf(m[2].toLowerCase());
+    const year = m[3] ? parseInt(m[3], 10) : new Date().getFullYear();
+    if (monthIdx !== -1) return new Date(year, monthIdx, day);
   }
+
+  const m2 = cleaned.match(/^([a-zA-Z]+)\s+(\d{1,2})(?:\s+(\d{4}))?/);
+  if (m2) {
+    const monthIdx = MONTHS.indexOf(m2[1].toLowerCase());
+    const day = parseInt(m2[2], 10);
+    const year = m2[3] ? parseInt(m2[3], 10) : new Date().getFullYear();
+    if (monthIdx !== -1) return new Date(year, monthIdx, day);
+  }
+
+  return null;
 }
+
+function parseDateForTimeline(dateStr) {
+  const d = parseAnyDate(dateStr);
+  if (!d) return { bigDay: '—', month: '—', weekday: '—' };
+  return {
+    bigDay: d.getDate(),
+    month: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+    weekday: d.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase(),
+  };
+}
+
 
 function formatToET(dateStr, timeStr) {
   if (!dateStr) return null;
@@ -200,19 +225,9 @@ export default function EventDetails() {
                         <FiMapPin /> {t('events.viewMaps')}
                       </a>
                       <a
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const start = formatToET(ev.date, ev.time);
-                          const end = addHoursToET(start, 3);
-                          openICS({
-                            title: ev.name,
-                            description: ev.description,
-                            location: `${ev.venue || ''}${ev.address ? ' - ' + ev.address : ''}`,
-                            start,
-                            end,
-                          });
-                        }}
+                        href={generateCalendarLink(ev)}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="timeline__btn"
                       >
                         <FiCalendar /> {t('events.addCalendar')}

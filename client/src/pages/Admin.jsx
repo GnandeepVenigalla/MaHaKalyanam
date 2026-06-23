@@ -4,7 +4,7 @@ import {
   verifyToken,
   fetchRSVPs, fetchRSVPStats, deleteRSVP,
   fetchContent, updateContent,
-  fetchEvents, addEvent, updateEvents, deleteEvent,
+  fetchEvents, addEvent, updateEvents, deleteEvent, patchEvent,
   fetchMenu, addMenuItem, deleteMenuItem,
   fetchMedia, addMedia, deleteMedia,
   fetchGifts, addGift, deleteGift,
@@ -12,10 +12,10 @@ import {
   fetchTranslations, updateTranslations,
 } from '../utils/api';
 import {
-  FiHome, FiUsers, FiEdit, FiCalendar, FiCoffee, FiFilm, FiGift,
+  FiHome, FiUsers, FiEdit, FiEdit2, FiCalendar, FiCoffee, FiFilm, FiGift,
   FiLogOut, FiExternalLink, FiTrash2, FiPlus, FiSearch,
   FiCheck, FiX, FiAlertCircle, FiDroplet, FiRefreshCw,
-  FiArrowUp, FiArrowDown, FiGlobe
+  FiArrowUp, FiArrowDown, FiGlobe, FiSave
 } from 'react-icons/fi';
 
 /* ═══════════════════════════════════════════════════════════════ */
@@ -373,18 +373,55 @@ function ContentEditorTab({ content, onSave }) {
 /*  Events Editor Tab                                             */
 /* ═══════════════════════════════════════════════════════════════ */
 function EventsEditorTab({ events, rsvps, onAdd, onDelete, onRefresh }) {
-  const [form, setForm] = useState({ name: '', subtitle: '', date: '', time: '', venue: '', address: '', description: '', guests_attending: '', icon: '', map_link: '', calendar_link: '', costPerGuest: '' });
+  const EMPTY_FORM = { name: '', subtitle: '', date: '', time: '', venue: '', address: '', description: '', guests_attending: '', icon: '', map_link: '', calendar_link: '', costPerGuest: '' };
+  const [form, setForm] = useState(EMPTY_FORM);
   const [adding, setAdding] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState(null);
+
+  // Edit state
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
 
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!form.name || !form.date) return;
     setAdding(true);
-    const payload = { ...form, costPerGuest: Number(form.costPerGuest) || 0 };
-    await onAdd(payload);
-    setForm({ name: '', subtitle: '', date: '', time: '', venue: '', address: '', description: '', guests_attending: '', icon: '', map_link: '', calendar_link: '', costPerGuest: '' });
+    await onAdd({ ...form, costPerGuest: Number(form.costPerGuest) || 0 });
+    setForm(EMPTY_FORM);
     setAdding(false);
+  };
+
+  const handleStartEdit = (ev) => {
+    setEditingId(ev._id || ev.id);
+    setExpandedEvent(null); // close attendee panel when editing
+    setEditForm({
+      name: ev.name || '',
+      subtitle: ev.subtitle || '',
+      date: ev.date || '',
+      time: ev.time || '',
+      venue: ev.venue || '',
+      address: ev.address || '',
+      description: ev.description || '',
+      guests_attending: ev.guestsAttending || '',
+      icon: ev.icon || '',
+      map_link: ev.mapLink || '',
+      calendar_link: ev.calendarLink || '',
+      costPerGuest: ev.costPerGuest != null ? String(ev.costPerGuest) : '',
+    });
+  };
+
+  const handleSaveEdit = async (evId) => {
+    if (!editForm.name || !editForm.date) return;
+    setSaving(true);
+    try {
+      await patchEvent(evId, { ...editForm, costPerGuest: Number(editForm.costPerGuest) || 0 });
+      onRefresh();
+      setEditingId(null);
+    } catch (err) {
+      console.error(err);
+    }
+    setSaving(false);
   };
 
   const handleMove = async (index, dir) => {
@@ -394,8 +431,7 @@ function EventsEditorTab({ events, rsvps, onAdd, onDelete, onRefresh }) {
     const temp = newEvents[index];
     newEvents[index] = newEvents[index + dir];
     newEvents[index + dir] = temp;
-    const payload = newEvents.map((ev, i) => ({ ...ev, sort_order: i }));
-    await updateEvents(payload);
+    await updateEvents(newEvents.map((ev, i) => ({ ...ev, sort_order: i })));
     onRefresh();
   };
 
@@ -468,6 +504,16 @@ function EventsEditorTab({ events, rsvps, onAdd, onDelete, onRefresh }) {
                         </span>
                       </button>
 
+                      {/* Edit button */}
+                      <button
+                        className="admin-icon-btn"
+                        title="Edit event"
+                        onClick={() => editingId === evId ? setEditingId(null) : handleStartEdit(ev)}
+                        style={{ color: editingId === evId ? '#6366f1' : undefined, background: editingId === evId ? '#6366f110' : undefined }}
+                      >
+                        <FiEdit2 />
+                      </button>
+
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <button className="admin-icon-btn" onClick={() => handleMove(i, -1)} disabled={i === 0}><FiArrowUp /></button>
                         <button className="admin-icon-btn" onClick={() => handleMove(i, 1)} disabled={i === events.length - 1}><FiArrowDown /></button>
@@ -477,6 +523,53 @@ function EventsEditorTab({ events, rsvps, onAdd, onDelete, onRefresh }) {
                       </button>
                     </div>
                   </div>
+
+                  {/* ── Inline Edit Panel ── */}
+                  {editingId === evId && (
+                    <div style={{ borderTop: '2px solid #6366f120', padding: '20px', background: '#f8f8ff' }}>
+                      <div style={{ fontWeight: '700', fontSize: '0.9rem', color: '#6366f1', marginBottom: '16px' }}>✏️ Edit Event</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        {[
+                          { key: 'name',             label: 'Event Name *',           full: false },
+                          { key: 'subtitle',         label: 'Subtitle',               full: false },
+                          { key: 'date',             label: 'Date *',                 full: false },
+                          { key: 'time',             label: 'Time',                   full: false },
+                          { key: 'venue',            label: 'Venue Name',             full: false },
+                          { key: 'address',          label: 'Full Address',           full: false },
+                          { key: 'icon',             label: 'Icon Emoji',             full: false },
+                          { key: 'costPerGuest',     label: 'Cost per Guest (₹)',     full: false },
+                          { key: 'map_link',         label: 'Map Link URL',           full: false },
+                          { key: 'calendar_link',    label: 'Calendar Link URL',      full: false },
+                          { key: 'guests_attending', label: 'Guests Attending label', full: false },
+                          { key: 'description',      label: 'Description',            full: true  },
+                        ].map(f => (
+                          <input
+                            key={f.key}
+                            placeholder={f.label}
+                            value={editForm[f.key]}
+                            onChange={e => setEditForm({ ...editForm, [f.key]: e.target.value })}
+                            type={f.key === 'costPerGuest' ? 'number' : 'text'}
+                            style={{ gridColumn: f.full ? '1 / -1' : undefined, padding: '9px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.85rem', outline: 'none', background: '#fff' }}
+                          />
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
+                        <button
+                          onClick={() => handleSaveEdit(evId)}
+                          disabled={saving}
+                          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '8px', padding: '9px 20px', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer' }}
+                        >
+                          <FiSave /> {saving ? 'Saving…' : 'Save Changes'}
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '9px 20px', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer' }}
+                        >
+                          <FiX /> Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* ── Expandable attendee panel ── */}
                   {isExpanded && (

@@ -36,7 +36,6 @@ function HomeContent() {
           brideName={content.bride_name}
         />
       )}
-
       <Navigation />
       <Hero />
       <FamilyDetails />

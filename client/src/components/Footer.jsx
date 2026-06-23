@@ -11,7 +11,11 @@ export default function Footer() {
   return (
     <footer className="footer">
       <div className="footer__inner">
-        <p className="footer__names">{groom} <span className="footer__amp">&</span> {bride}</p>
+        <div className="footer__names">
+          <span className="footer__name">{groom}</span>
+          <span className="footer__amp">&</span>
+          <span className="footer__name">{bride}</span>
+        </div>
         <div className="footer__line" />
         <p className="footer__date">
           {content.wedding_date
@@ -25,7 +29,7 @@ export default function Footer() {
 
       <style>{`
         .footer {
-          background: #444E41; /* Dark olive green matching the screenshot */
+          background: #444E41;
           padding: 80px 24px 60px;
           text-align: center;
         }
@@ -37,17 +41,30 @@ export default function Footer() {
           align-items: center;
         }
         .footer__names {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0;
+          margin-bottom: 24px;
+        }
+        .footer__name {
           font-family: var(--font-cursive);
           font-size: 3.5rem;
           color: #F8F8F8;
-          margin-bottom: 24px;
           font-weight: 300;
           letter-spacing: 0.05em;
+          display: block;
+          text-align: center;
+          line-height: 1.15;
         }
         .footer__amp {
           font-family: var(--font-cursive);
-          font-size: 2.5rem;
-          margin: 0 8px;
+          font-size: 2rem;
+          color: #D4A373;
+          display: block;
+          text-align: center;
+          line-height: 1.4;
+          margin: 2px 0;
         }
         .footer__line {
           width: 60px;
@@ -84,8 +101,8 @@ export default function Footer() {
         }
 
         @media (max-width: 768px) {
-          .footer__names { font-size: 2.5rem; }
-          .footer__amp { font-size: 2rem; }
+          .footer__name { font-size: 2.5rem; }
+          .footer__amp { font-size: 1.8rem; }
         }
       `}</style>
     </footer>

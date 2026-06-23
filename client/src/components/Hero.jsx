@@ -1,7 +1,60 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useSiteData } from '../context/SiteContext';
 import { useLanguage } from '../context/LanguageContext';
+
+/* ─── Petal palette ─── */
+const PALETTES = [
+  ['#FFB3C9', '#E8607A'],
+  ['#FFC8D8', '#F0809A'],
+  ['#F9A0C0', '#DC5080'],
+  ['#FAD0DC', '#F5A0BB'],
+  ['#FFA8C0', '#E06888'],
+  ['#FFBFD5', '#E87898'],
+  ['#F7C8D8', '#D85878'],
+  ['#FFD8E8', '#F0A0C0'],
+];
+
+/* ─── Draw a realistic teardrop petal ─── */
+function drawPetal(ctx, x, y, w, h, rotation, color1, color2, opacity) {
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+
+  const grad = ctx.createLinearGradient(-w * 0.3, -h * 0.5, w * 0.4, h * 0.5);
+  grad.addColorStop(0, color1);
+  grad.addColorStop(0.6, color2);
+  grad.addColorStop(1, color2 + 'bb');
+
+  ctx.beginPath();
+  ctx.moveTo(0, -h / 2);
+  ctx.bezierCurveTo( w * 0.72, -h * 0.35,  w * 0.65, h * 0.12, 0, h / 2);
+  ctx.bezierCurveTo(-w * 0.65, h * 0.12, -w * 0.72, -h * 0.35, 0, -h / 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Center vein
+  ctx.beginPath();
+  ctx.moveTo(0, -h * 0.44);
+  ctx.quadraticCurveTo(w * 0.05, 0, 0, h * 0.44);
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+  ctx.lineWidth = w * 0.06;
+  ctx.stroke();
+
+  // Highlight
+  const hl = ctx.createRadialGradient(-w * 0.2, -h * 0.22, 0, -w * 0.2, -h * 0.22, w * 0.52);
+  hl.addColorStop(0, 'rgba(255,255,255,0.32)');
+  hl.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.beginPath();
+  ctx.moveTo(0, -h / 2);
+  ctx.bezierCurveTo( w * 0.72, -h * 0.35,  w * 0.65, h * 0.12, 0, h / 2);
+  ctx.bezierCurveTo(-w * 0.65, h * 0.12, -w * 0.72, -h * 0.35, 0, -h / 2);
+  ctx.fillStyle = hl;
+  ctx.fill();
+
+  ctx.restore();
+}
 
 function formatDateParts(dateStr) {
   if (!dateStr) return { day: '24', month: 'August', year: '2026', weekday: 'Monday' };
@@ -26,9 +79,86 @@ export default function Hero() {
   const { content } = useSiteData();
   const { t, language } = useLanguage();
   const dp = formatDateParts(content.wedding_date);
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Spawn 50 petals staggered across the hero height
+    const petals = Array.from({ length: 50 }, (_, i) => {
+      const p = PALETTES[i % PALETTES.length];
+      return {
+        x: Math.random() * canvas.width,
+        y: -40 - Math.random() * canvas.height * 0.7,
+        w: 14 + Math.random() * 16,
+        h: 22 + Math.random() * 24,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.04,
+        fallSpeed: 0.8 + Math.random() * 1.4,
+        swayOffset: Math.random() * Math.PI * 2,
+        swaySpeed: 0.016 + Math.random() * 0.022,
+        swayAmp: 0.5 + Math.random() * 1.1,
+        color1: p[0],
+        color2: p[1],
+        opacity: 0.75 + Math.random() * 0.25,
+        t: 0,
+      };
+    });
+
+    let alive = true;
+    const render = () => {
+      if (!alive) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      petals.forEach(p => {
+        p.t++;
+        p.x += Math.sin(p.swayOffset + p.t * p.swaySpeed) * p.swayAmp;
+        p.y += p.fallSpeed;
+        p.rotation += p.rotSpeed;
+
+        const fadeStart = canvas.height * 0.82;
+        const alpha = p.y > fadeStart
+          ? p.opacity * Math.max(0, 1 - (p.y - fadeStart) / (canvas.height * 0.18 + 30))
+          : p.opacity;
+
+        if (alpha > 0.01) {
+          drawPetal(ctx, p.x, p.y, p.w, p.h, p.rotation, p.color1, p.color2, alpha);
+        }
+
+        if (p.y > canvas.height + 40) {
+          p.y = -50;
+          p.x = Math.random() * canvas.width;
+          p.swayOffset = Math.random() * Math.PI * 2;
+        }
+      });
+
+      rafRef.current = requestAnimationFrame(render);
+    };
+    render();
+
+    return () => {
+      alive = false;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
 
   return (
     <section className="hero" id="home">
+
+      {/* Petal canvas — sits behind content */}
+      <canvas ref={canvasRef} className="hero__petals" aria-hidden="true" />
+
       <div className="hero__content">
         
         {/* Divine Blessings Section */}
@@ -80,9 +210,19 @@ export default function Hero() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          background: #FDFBF7; /* Very clean cream/ivory background */
+          background: #FDFBF7;
           overflow: hidden;
           padding: 120px 24px 60px;
+        }
+
+        /* Petal canvas fills the whole hero */
+        .hero__petals {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 1;
         }
 
         .hero__content {
@@ -95,6 +235,7 @@ export default function Hero() {
           justify-content: center;
           width: 100%;
           max-width: 900px;
+          position: relative;
         }
 
         .hero__divine {
@@ -108,14 +249,14 @@ export default function Hero() {
           width: 60px;
           height: auto;
           margin-bottom: 24px;
-          filter: brightness(0) saturate(100%) invert(10%) sepia(5%) saturate(10%) hue-rotate(314deg) brightness(96%) contrast(90%); /* Dark color */
+          filter: brightness(0) saturate(100%) invert(10%) sepia(5%) saturate(10%) hue-rotate(314deg) brightness(96%) contrast(90%);
         }
 
         .hero__sloka {
           font-family: 'Tiro Telugu', serif;
           font-size: 1rem;
           line-height: 1.8;
-          color: rgba(0, 0, 0, 0.65); /* Readable dark grey */
+          color: rgba(0, 0, 0, 0.65);
           text-align: center;
         }
 
@@ -149,7 +290,7 @@ export default function Hero() {
           font-weight: 600;
           letter-spacing: 0.35em;
           text-transform: uppercase;
-          color: #B29B69; /* Gold color */
+          color: #B29B69;
         }
 
         .hero__line {
@@ -172,7 +313,7 @@ export default function Hero() {
           font-size: calc(clamp(4.5rem, 12vw, 8rem) * var(--font-names-scale, 1));
           font-weight: 400;
           line-height: 0.95;
-          color: #1A1C1A; /* Very dark text */
+          color: #1A1C1A;
         }
 
         .hero__ampersand-wrap {
@@ -186,7 +327,7 @@ export default function Hero() {
         .hero__ampersand {
           font-family: var(--font-display, 'Fraunces', serif);
           font-size: clamp(2rem, 4vw, 3rem);
-          color: #C0A868; /* Gold */
+          color: #C0A868;
           font-weight: 400;
         }
 
@@ -235,6 +376,10 @@ export default function Hero() {
           .hero__elders { margin-bottom: 20px; }
           .hero__ganesha { width: 50px; margin-bottom: 16px; }
           .hero__names-wrap { margin-bottom: 30px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .hero__petals { display: none; }
         }
       `}</style>
     </section>

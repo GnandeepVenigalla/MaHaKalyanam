@@ -79,7 +79,7 @@ export default function EnvelopeIntro({ onOpen, groomName, brideName }) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       setAnimState('done');
       onOpen();
-    }, 4000);
+    }, 600);
   };
 
   useEffect(() => {

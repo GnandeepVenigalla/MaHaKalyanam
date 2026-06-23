@@ -172,6 +172,45 @@ router.put('/events', verifyToken, async (req, res) => {
   }
 });
 
+// PATCH /api/events/:id — update a single event (admin)
+router.patch('/events/:id', verifyToken, async (req, res) => {
+  try {
+    const { name, subtitle, date, time, venue, address, description, guests_attending, icon, map_link, calendar_link, costPerGuest } = req.body;
+
+    if (!name || !date) {
+      return res.status(400).json({ success: false, message: 'Event name and date are required.' });
+    }
+
+    const updated = await Event.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        subtitle: subtitle || null,
+        date,
+        time: time || null,
+        venue: venue || null,
+        address: address || null,
+        description: description || null,
+        guestsAttending: guests_attending || null,
+        icon: icon || null,
+        mapLink: map_link || null,
+        calendarLink: calendar_link || null,
+        costPerGuest: costPerGuest != null ? Number(costPerGuest) : 0,
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Event not found.' });
+    }
+
+    return res.json({ success: true, message: 'Event updated.', data: updated });
+  } catch (error) {
+    console.error('Event patch error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update event.' });
+  }
+});
+
 // DELETE /api/events/:id — delete an event (admin)
 router.delete('/events/:id', verifyToken, async (req, res) => {
   try {
