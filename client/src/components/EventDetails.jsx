@@ -219,8 +219,7 @@ export default function EventDetails() {
 
                       {ev.dressCode && (
                         <span className="timeline__card-dresscode">
-                          <span className="timeline__card-dresscode-icon">👗</span>
-                          {ev.dressCode}
+                          DRESS CODE · {ev.dressCode}
                         </span>
                       )}
 
@@ -233,15 +232,10 @@ export default function EventDetails() {
                       <button
                         className="timeline__btn"
                         onClick={() => {
-                          const evId = ev._id || ev.id;
-                          const isApple = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
-                          if (isApple && evId) {
-                            // iOS/macOS → server serves .ics with Content-Disposition: inline
-                            // Safari sees text/calendar and opens native Calendar app
-                            window.location.href = `/api/events/${evId}/calendar`;
-                          } else {
-                            // Android / desktop → Google Calendar
-                            window.open(generateCalendarLink(ev), '_blank');
+                          // Always open Google Calendar directly — no browser download prompts on any device
+                          const link = generateCalendarLink(ev);
+                          if (link && link !== '#') {
+                            window.open(link, '_blank', 'noopener,noreferrer');
                           }
                         }}
                       >
@@ -412,23 +406,14 @@ export default function EventDetails() {
         }
 
         .timeline__card-dresscode {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          margin-top: 10px;
-          background: rgba(212, 168, 83, 0.12);
-          border: 1px solid rgba(212, 168, 83, 0.35);
-          border-radius: 20px;
-          padding: 5px 14px;
           font-family: var(--font-body);
           font-size: 0.72rem;
           font-weight: 600;
-          letter-spacing: 0.12em;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: var(--color-gold);
-          width: fit-content;
+          color: rgba(212, 175, 55, 0.75);
+          margin-top: 10px;
         }
-        .timeline__card-dresscode-icon { font-size: 0.9rem; }
 
         .timeline__card-guests {
           display: flex;
@@ -561,7 +546,7 @@ export default function EventDetails() {
 
           .timeline__date { align-items: center !important; }
           .timeline__date-sub { flex-direction: row !important; }
-          
+
           .timeline__card {
             border-left: none;
             border-top: 4px solid var(--color-gold);

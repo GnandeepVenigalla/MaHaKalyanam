@@ -69,15 +69,17 @@ function formatDateParts(dateStr) {
   } catch { return { day: '24', month: 'August', year: '2026', weekday: 'Monday' }; }
 }
 
-/* Reveal: text slides UP into view from behind a clip mask */
+/* Reveal: text slides UP smoothly from below a clip mask */
 const revealContainer = {
   overflow: 'hidden',
   display: 'block',
+  /* Extra padding at bottom so the clip has room for the slide */
+  paddingBottom: '0.1em',
 };
 
 const reveal = (delay = 0, duration = 1.0) => ({
-  initial: { y: '110%', opacity: 0 },
-  animate: { y: '0%', opacity: 1 },
+  initial: { y: 80, opacity: 0 },
+  animate: { y: 0, opacity: 1 },
   transition: { delay, duration, ease: [0.22, 1, 0.36, 1] },
 });
 
@@ -88,12 +90,20 @@ const fadeIn = (delay = 0) => ({
   transition: { delay, duration: 0.8, ease: 'easeOut' },
 });
 
-export default function Hero() {
+export default function Hero({ shouldAnimate = true }) {
   const { content } = useSiteData();
   const { t, language } = useLanguage();
   const dp = formatDateParts(content.wedding_date);
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
+
+  // Build animation props — if not yet animating, show final state instantly
+  const r = (delay, duration) => shouldAnimate
+    ? reveal(delay, duration)
+    : { initial: { y: 0, opacity: 1 }, animate: { y: 0, opacity: 1 }, transition: {} };
+  const f = (delay) => shouldAnimate
+    ? fadeIn(delay)
+    : { initial: { opacity: 1 }, animate: { opacity: 1 }, transition: {} };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -175,14 +185,14 @@ export default function Hero() {
       <div className="hero__content">
 
         {/* Ganesha — reveal from below */}
-        <motion.div className="hero__divine" {...fadeIn(0.2)}>
+        <motion.div className="hero__divine" {...f(0.2)}>
           <div style={revealContainer}>
-            <motion.div {...reveal(0.3, 0.9)}>
+            <motion.div {...r(0.3, 0.9)}>
               <img src="/ganesha.png" alt="Lord Ganesha" className="hero__ganesha" />
             </motion.div>
           </div>
           <div style={revealContainer}>
-            <motion.div className="hero__sloka" {...reveal(0.5, 0.9)}>
+            <motion.div className="hero__sloka" {...r(0.5, 0.9)}>
               వక్రతుండ మహాకాయ సూర్యకోటి సమప్రభ<br/>
               నిర్విఘ్నం కురుమేదేవ సర్వకార్యేషు సర్వదా
             </motion.div>
@@ -191,13 +201,13 @@ export default function Hero() {
 
         {/* Hashtag */}
         <div style={revealContainer}>
-          <motion.div className="hero__hashtag" {...reveal(0.65, 0.85)}>
+          <motion.div className="hero__hashtag" {...r(0.65, 0.85)}>
             <span>#NIRA</span>
           </motion.div>
         </div>
 
         {/* Blessings line */}
-        <motion.div className="hero__elders" {...fadeIn(0.8)}>
+        <motion.div className="hero__elders" {...f(0.8)}>
           <span className="hero__line"></span>
           <span>{t('hero.blessings')}</span>
           <span className="hero__line"></span>
@@ -206,17 +216,17 @@ export default function Hero() {
         {/* Names — each line reveals independently */}
         <div className="hero__names-wrap">
           <div style={revealContainer}>
-            <motion.h1 className="hero__name" {...reveal(0.9, 1.1)}>
+            <motion.h1 className="hero__name" {...r(0.9, 1.1)}>
               {language === 'te' ? t('hero.groomName') : (content.groom_name || 'Ranjith')}
             </motion.h1>
           </div>
           <div style={revealContainer}>
-            <motion.div className="hero__ampersand-wrap" {...reveal(1.15, 0.9)}>
+            <motion.div className="hero__ampersand-wrap" {...r(1.15, 0.9)}>
               <span className="hero__ampersand">&</span>
             </motion.div>
           </div>
           <div style={revealContainer}>
-            <motion.h1 className="hero__name" {...reveal(1.05, 1.1)}>
+            <motion.h1 className="hero__name" {...r(1.05, 1.1)}>
               {language === 'te' ? t('hero.brideName') : (content.bride_name || 'Nithya')}
             </motion.h1>
           </div>
@@ -224,7 +234,7 @@ export default function Hero() {
 
         {/* Date pill */}
         <div style={revealContainer}>
-          <motion.div className="hero__date-box" {...reveal(1.35, 0.9)}>
+          <motion.div className="hero__date-box" {...r(1.35, 0.9)}>
             <div className="hero__date-pill">
               <span className="hero__date-day">{dp.weekday}</span>
               <span className="hero__date-divider">|</span>

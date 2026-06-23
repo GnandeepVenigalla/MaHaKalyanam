@@ -12,7 +12,14 @@ import Footer from '../components/Footer';
 
 function HomeContent() {
   const { loading, content } = useSiteData();
-  const [introOpen, setIntroOpen] = useState(false);
+  // 'hidden'  → intro showing, main content invisible
+  // 'visible' → intro fully exited, main content fades + Hero animates
+  const [mainState, setMainState] = useState('hidden');
+
+  const handleIntroOpen = () => {
+    // Wait for the intro's 600ms exit fade to finish, then reveal
+    setTimeout(() => setMainState('visible'), 650);
+  };
 
   if (loading) {
     return (
@@ -27,22 +34,35 @@ function HomeContent() {
     );
   }
 
+  const isVisible = mainState === 'visible';
+
   return (
     <>
-      {!introOpen && (
+      {!isVisible && (
         <EnvelopeIntro
-          onOpen={() => setIntroOpen(true)}
+          onOpen={handleIntroOpen}
           groomName={content.groom_name}
           brideName={content.bride_name}
         />
       )}
-      <Navigation />
-      <Hero />
-      <FamilyDetails />
-      <EventDetails />
-      <FloralDivider />
-      <RSVPForm />
-      <Footer />
+
+      {/* Main page — invisible until intro fully exits, then fades in */}
+      <div
+        style={{
+          opacity: isVisible ? 1 : 0,
+          transition: 'opacity 0.5s ease',
+          pointerEvents: isVisible ? 'auto' : 'none',
+        }}
+      >
+        <Navigation />
+        {/* key forces Hero to fully remount (fresh animations) once visible */}
+        <Hero key={isVisible ? 'shown' : 'hidden'} shouldAnimate={isVisible} />
+        <FamilyDetails />
+        <EventDetails />
+        <FloralDivider />
+        <RSVPForm />
+        <Footer />
+      </div>
     </>
   );
 }
@@ -56,4 +76,3 @@ export default function Home() {
     </LanguageProvider>
   );
 }
-
