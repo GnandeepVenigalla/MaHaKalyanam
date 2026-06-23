@@ -373,7 +373,7 @@ function ContentEditorTab({ content, onSave }) {
 /*  Events Editor Tab                                             */
 /* ═══════════════════════════════════════════════════════════════ */
 function EventsEditorTab({ events, rsvps, onAdd, onDelete, onRefresh }) {
-  const EMPTY_FORM = { name: '', subtitle: '', date: '', time: '', venue: '', address: '', description: '', guests_attending: '', icon: '', map_link: '', calendar_link: '', costPerGuest: '' };
+  const EMPTY_FORM = { name: '', subtitle: '', date: '', time: '', venue: '', address: '', description: '', guests_attending: '', icon: '', map_link: '', calendar_link: '', dress_code: '', costPerGuest: '' };
   const [form, setForm] = useState(EMPTY_FORM);
   const [adding, setAdding] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState(null);
@@ -407,6 +407,7 @@ function EventsEditorTab({ events, rsvps, onAdd, onDelete, onRefresh }) {
       icon: ev.icon || '',
       map_link: ev.mapLink || '',
       calendar_link: ev.calendarLink || '',
+      dress_code: ev.dressCode || '',
       costPerGuest: ev.costPerGuest != null ? String(ev.costPerGuest) : '',
     });
   };
@@ -540,6 +541,7 @@ function EventsEditorTab({ events, rsvps, onAdd, onDelete, onRefresh }) {
                           { key: 'costPerGuest',     label: 'Cost per Guest (₹)',     full: false },
                           { key: 'map_link',         label: 'Map Link URL',           full: false },
                           { key: 'calendar_link',    label: 'Calendar Link URL',      full: false },
+                          { key: 'dress_code',       label: 'Dress Code (e.g. Formals / Traditional)', full: true },
                           { key: 'guests_attending', label: 'Guests Attending label', full: false },
                           { key: 'description',      label: 'Description',            full: true  },
                         ].map(f => (
@@ -647,6 +649,7 @@ function EventsEditorTab({ events, rsvps, onAdd, onDelete, onRefresh }) {
             <input placeholder="Map Link URL" value={form.map_link} onChange={e => setForm({...form, map_link: e.target.value})} />
             <input placeholder="Calendar Link URL" value={form.calendar_link} onChange={e => setForm({...form, calendar_link: e.target.value})} />
             <input placeholder="Cost per Guest (₹)" type="number" value={form.costPerGuest} onChange={e => setForm({...form, costPerGuest: e.target.value})} />
+            <input placeholder="Dress Code (e.g. Formals / Traditional)" style={{gridColumn: '1 / -1'}} value={form.dress_code} onChange={e => setForm({...form, dress_code: e.target.value})} />
             <input placeholder="Description" style={{gridColumn: '1 / -1'}} value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
           </div>
           <button type="submit" className="admin-btn admin-btn--primary" disabled={adding} style={{marginTop: '16px'}}>

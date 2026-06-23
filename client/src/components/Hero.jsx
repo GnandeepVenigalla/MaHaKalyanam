@@ -69,10 +69,23 @@ function formatDateParts(dateStr) {
   } catch { return { day: '24', month: 'August', year: '2026', weekday: 'Monday' }; }
 }
 
-const fadeUp = (delay = 0, duration = 1.2) => ({
-  initial: { opacity: 0, y: 40 },
-  animate: { opacity: 1, y: 0 },
-  transition: { delay, duration, ease: [0.16, 1, 0.3, 1] },
+/* Reveal: text slides UP into view from behind a clip mask */
+const revealContainer = {
+  overflow: 'hidden',
+  display: 'block',
+};
+
+const reveal = (delay = 0, duration = 1.0) => ({
+  initial: { y: '110%', opacity: 0 },
+  animate: { y: '0%', opacity: 1 },
+  transition: { delay, duration, ease: [0.22, 1, 0.36, 1] },
+});
+
+/* Subtle fade for supporting elements (lines, dividers) */
+const fadeIn = (delay = 0) => ({
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  transition: { delay, duration: 0.8, ease: 'easeOut' },
 });
 
 export default function Hero() {
@@ -160,45 +173,65 @@ export default function Hero() {
       <canvas ref={canvasRef} className="hero__petals" aria-hidden="true" />
 
       <div className="hero__content">
-        
-        {/* Divine Blessings Section */}
-        <motion.div className="hero__divine" {...fadeUp(0.1)}>
-          <img src="/ganesha.png" alt="Lord Ganesha" className="hero__ganesha" />
-          <div className="hero__sloka">
-            వక్రతుండ మహాకాయ సూర్యకోటి సమప్రభ<br/>
-            నిర్విఘ్నం కురుమేదేవ సర్వకార్యేషు సర్వదా
+
+        {/* Ganesha — reveal from below */}
+        <motion.div className="hero__divine" {...fadeIn(0.2)}>
+          <div style={revealContainer}>
+            <motion.div {...reveal(0.3, 0.9)}>
+              <img src="/ganesha.png" alt="Lord Ganesha" className="hero__ganesha" />
+            </motion.div>
+          </div>
+          <div style={revealContainer}>
+            <motion.div className="hero__sloka" {...reveal(0.5, 0.9)}>
+              వక్రతుండ మహాకాయ సూర్యకోటి సమప్రభ<br/>
+              నిర్విఘ్నం కురుమేదేవ సర్వకార్యేషు సర్వదా
+            </motion.div>
           </div>
         </motion.div>
 
-        <motion.div className="hero__hashtag" {...fadeUp(0.25)}>
-          <span>#NIRA</span>
-        </motion.div>
+        {/* Hashtag */}
+        <div style={revealContainer}>
+          <motion.div className="hero__hashtag" {...reveal(0.65, 0.85)}>
+            <span>#NIRA</span>
+          </motion.div>
+        </div>
 
-        <motion.div className="hero__elders" {...fadeUp(0.3)}>
+        {/* Blessings line */}
+        <motion.div className="hero__elders" {...fadeIn(0.8)}>
           <span className="hero__line"></span>
           <span>{t('hero.blessings')}</span>
           <span className="hero__line"></span>
         </motion.div>
 
+        {/* Names — each line reveals independently */}
         <div className="hero__names-wrap">
-          <motion.h1 className="hero__name" {...fadeUp(0.5)}>
-            {language === 'te' ? t('hero.groomName') : (content.groom_name || 'Ranjith')}
-          </motion.h1>
-          <motion.div className="hero__ampersand-wrap" {...fadeUp(0.8)}>
-            <span className="hero__ampersand">&</span>
-          </motion.div>
-          <motion.h1 className="hero__name" {...fadeUp(0.7)}>
-            {language === 'te' ? t('hero.brideName') : (content.bride_name || 'Nithya')}
-          </motion.h1>
+          <div style={revealContainer}>
+            <motion.h1 className="hero__name" {...reveal(0.9, 1.1)}>
+              {language === 'te' ? t('hero.groomName') : (content.groom_name || 'Ranjith')}
+            </motion.h1>
+          </div>
+          <div style={revealContainer}>
+            <motion.div className="hero__ampersand-wrap" {...reveal(1.15, 0.9)}>
+              <span className="hero__ampersand">&</span>
+            </motion.div>
+          </div>
+          <div style={revealContainer}>
+            <motion.h1 className="hero__name" {...reveal(1.05, 1.1)}>
+              {language === 'te' ? t('hero.brideName') : (content.bride_name || 'Nithya')}
+            </motion.h1>
+          </div>
         </div>
 
-        <motion.div className="hero__date-box" {...fadeUp(1.0)}>
-          <div className="hero__date-pill">
-            <span className="hero__date-day">{dp.weekday}</span>
-            <span className="hero__date-divider">|</span>
-            <span className="hero__date-main">{dp.month} {dp.day}, {dp.year}</span>
-          </div>
-        </motion.div>
+        {/* Date pill */}
+        <div style={revealContainer}>
+          <motion.div className="hero__date-box" {...reveal(1.35, 0.9)}>
+            <div className="hero__date-pill">
+              <span className="hero__date-day">{dp.weekday}</span>
+              <span className="hero__date-divider">|</span>
+              <span className="hero__date-main">{dp.month} {dp.day}, {dp.year}</span>
+            </div>
+          </motion.div>
+        </div>
 
       </div>
 

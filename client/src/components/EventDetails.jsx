@@ -216,7 +216,13 @@ export default function EventDetails() {
                       <span className="timeline__card-datetime">{ev.date} · {ev.time}</span>
                       <span className="timeline__card-venue">{ev.venue}</span>
                       <span className="timeline__card-venue">{ev.address}</span>
-                      
+
+                      {ev.dressCode && (
+                        <span className="timeline__card-dresscode">
+                          <span className="timeline__card-dresscode-icon">👗</span>
+                          {ev.dressCode}
+                        </span>
+                      )}
 
                     </div>
 
@@ -224,14 +230,23 @@ export default function EventDetails() {
                       <a href={generateMapLink(ev)} target="_blank" rel="noopener noreferrer" className="timeline__btn">
                         <FiMapPin /> {t('events.viewMaps')}
                       </a>
-                      <a
-                        href={generateCalendarLink(ev)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
                         className="timeline__btn"
+                        onClick={() => {
+                          const evId = ev._id || ev.id;
+                          const isApple = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
+                          if (isApple && evId) {
+                            // iOS/macOS → server serves .ics with Content-Disposition: inline
+                            // Safari sees text/calendar and opens native Calendar app
+                            window.location.href = `/api/events/${evId}/calendar`;
+                          } else {
+                            // Android / desktop → Google Calendar
+                            window.open(generateCalendarLink(ev), '_blank');
+                          }
+                        }}
                       >
                         <FiCalendar /> {t('events.addCalendar')}
-                      </a>
+                      </button>
                     </div>
                   </div>
                 </motion.div>
@@ -396,6 +411,25 @@ export default function EventDetails() {
           color: var(--color-gold-light);
         }
 
+        .timeline__card-dresscode {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 10px;
+          background: rgba(212, 168, 83, 0.12);
+          border: 1px solid rgba(212, 168, 83, 0.35);
+          border-radius: 20px;
+          padding: 5px 14px;
+          font-family: var(--font-body);
+          font-size: 0.72rem;
+          font-weight: 600;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--color-gold);
+          width: fit-content;
+        }
+        .timeline__card-dresscode-icon { font-size: 0.9rem; }
+
         .timeline__card-guests {
           display: flex;
           align-items: center;
@@ -426,6 +460,10 @@ export default function EventDetails() {
           color: var(--color-ivory);
           text-transform: uppercase;
           transition: color 0.3s;
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: pointer;
         }
         .timeline__btn:hover { color: var(--color-gold); }
 

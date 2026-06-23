@@ -98,10 +98,85 @@ router.get('/events', async (_req, res) => {
   }
 });
 
+// ─── ICS helper (server-side) ────────────────────────────────
+function escapeICS(str = '') {
+  return String(str).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r\n|\r|\n/g, '\\n');
+}
+function parseEventDT(dateStr, timeStr) {
+  if (!dateStr) return null;
+  // Clean ordinal suffixes e.g. "29th August 2026" → "29 August 2026"
+  const cleaned = dateStr.replace(/(\d+)(st|nd|rd|th)/gi, '$1');
+  let d = new Date(cleaned);
+  if (isNaN(d)) d = new Date(dateStr);
+  if (isNaN(d)) return null;
+  let hh = 0, mm = 0;
+  if (timeStr) {
+    const m = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+    if (m) {
+      hh = parseInt(m[1], 10);
+      mm = parseInt(m[2], 10);
+      if (/pm/i.test(m[3]) && hh !== 12) hh += 12;
+      if (/am/i.test(m[3]) && hh === 12) hh = 0;
+    }
+  }
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), hh, mm, 0);
+}
+function toICSDate(dt) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${dt.getFullYear()}${pad(dt.getMonth()+1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
+}
+function buildICS(ev) {
+  const start = parseEventDT(ev.date, ev.time);
+  if (!start) return null;
+  const end = new Date(start.getTime() + 3 * 60 * 60 * 1000); // +3 hours
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const stamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth()+1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
+  const uid = `${(ev.name||'event').replace(/\s+/g,'-')}-${Date.now()}@mahakalyanam`;
+  const location = [ev.venue, ev.address].filter(Boolean).join(' - ');
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//MaHaKalyanam//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${stamp}`,
+    `DTSTART:${toICSDate(start)}`,
+    `DTEND:${toICSDate(end)}`,
+    `SUMMARY:${escapeICS(ev.name)}`,
+    location ? `LOCATION:${escapeICS(location)}` : '',
+    ev.description ? `DESCRIPTION:${escapeICS(ev.description)}` : '',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].filter(Boolean);
+  return lines.join('\r\n');
+}
+
+// GET /api/events/:id/calendar — serve .ics file (public, iOS-safe)
+router.get('/events/:id/calendar', async (req, res) => {
+  try {
+    const ev = await Event.findById(req.params.id);
+    if (!ev) return res.status(404).send('Event not found');
+    const ics = buildICS(ev);
+    if (!ics) return res.status(400).send('Could not build calendar file — check event date.');
+    const filename = (ev.name || 'event').replace(/[^a-z0-9_-]/gi, '_') + '.ics';
+    // inline (not attachment) → iOS Safari opens Calendar app instead of downloading
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.send(ics);
+  } catch (err) {
+    console.error('Calendar ICS error:', err);
+    return res.status(500).send('Failed to generate calendar file.');
+  }
+});
+
 // POST /api/events — add a new event (admin)
 router.post('/events', verifyToken, async (req, res) => {
   try {
-    const { name, subtitle, date, time, venue, address, description, guests_attending, icon, map_link, calendar_link, sort_order } = req.body;
+    const { name, subtitle, date, time, venue, address, description, guests_attending, icon, map_link, calendar_link, dress_code, sort_order } = req.body;
 
     if (!name || !date) {
       return res.status(400).json({
@@ -122,6 +197,7 @@ router.post('/events', verifyToken, async (req, res) => {
       icon: icon || null,
       mapLink: map_link || null,
       calendarLink: calendar_link || null,
+      dressCode: dress_code || null,
       sortOrder: sort_order || 0,
     });
 
@@ -175,7 +251,7 @@ router.put('/events', verifyToken, async (req, res) => {
 // PATCH /api/events/:id — update a single event (admin)
 router.patch('/events/:id', verifyToken, async (req, res) => {
   try {
-    const { name, subtitle, date, time, venue, address, description, guests_attending, icon, map_link, calendar_link, costPerGuest } = req.body;
+    const { name, subtitle, date, time, venue, address, description, guests_attending, icon, map_link, calendar_link, dress_code, costPerGuest } = req.body;
 
     if (!name || !date) {
       return res.status(400).json({ success: false, message: 'Event name and date are required.' });
@@ -195,6 +271,7 @@ router.patch('/events/:id', verifyToken, async (req, res) => {
         icon: icon || null,
         mapLink: map_link || null,
         calendarLink: calendar_link || null,
+        dressCode: dress_code || null,
         costPerGuest: costPerGuest != null ? Number(costPerGuest) : 0,
       },
       { new: true }

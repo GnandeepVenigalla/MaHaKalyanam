@@ -93,8 +93,7 @@ export function downloadICS(event) {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
-// Opens the generated .ics in a new tab/window (no download attribute) so
-// iOS/macOS/desktop calendar apps will show the native add dialog.
+// Opens the generated .ics so iOS/macOS/desktop calendar apps show the native add dialog.
 export function openICS(event) {
   if (!event || !event.start || !event.end) return;
 
@@ -120,20 +119,22 @@ export function openICS(event) {
   if (description) lines.push(`DESCRIPTION:${description}`);
   if (location) lines.push(`LOCATION:${location}`);
   lines.push('END:VEVENT');
-
   lines.push('END:VCALENDAR');
 
   const icsContent = lines.join('\r\n');
   const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);
 
-  // Open in new tab/window without download attribute
-  const w = window.open(url, '_blank');
-  if (!w) {
-    // fallback: navigate current window (some mobile browsers block window.open)
-    window.location.href = url;
-  }
+  // Create a hidden anchor WITHOUT the `download` attribute.
+  // iOS Safari sees text/calendar MIME type → launches Calendar app.
+  // Do NOT use window.open() — iOS treats that as a download in a new tab.
+  const a = document.createElement('a');
+  a.href = url;
+  // No a.download — critical for iOS to open Calendar instead of downloading
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
-  // Revoke after a short delay
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
