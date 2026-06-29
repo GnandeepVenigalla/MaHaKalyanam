@@ -38,24 +38,10 @@ export default function App() {
       <audio
         ref={audioRef}
         src="/My Audio.mp3"
+        autoPlay
         loop
-        muted={false}
         preload="auto"
       />
-      {!isPlaying && (
-        <button
-          type="button"
-          className="btn btn--gold"
-          onClick={() => {
-            const audio = audioRef.current;
-            if (!audio) return;
-            audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-          }}
-          style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 999, padding: '12px 18px' }}
-        >
-          Play Music
-        </button>
-      )}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/videos" element={<Videos />} />
