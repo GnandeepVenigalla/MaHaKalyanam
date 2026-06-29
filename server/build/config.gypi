@@ -434,7 +434,7 @@
     "init_module": "/Users/nirvana/.npm-init.js",
     "userconfig": "/Users/nirvana/.npmrc",
     "globalconfig": "/usr/local/etc/npmrc",
-    "local_prefix": "/Users/nirvana/Desktop/Ranjith webs Nithaya/server",
+    "local_prefix": "/Users/nirvana/Desktop/Ranjith webs Nithya/server",
     "global_prefix": "/usr/local"
   }
 }

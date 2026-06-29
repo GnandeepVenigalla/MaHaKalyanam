@@ -1,6 +1,6 @@
 // ============================================================
 // Express Server Entry Point
-// MaHaKalyanam Wedding Server — Ranjith & Nithaya (MongoDB)
+// MaHaKalyanam Wedding Server — Ranjith & Nithya (MongoDB)
 // ============================================================
 
 import dotenv from 'dotenv';
@@ -115,7 +115,7 @@ if (!isVercel) {
   ensureDB().then(() => {
     app.listen(PORT, () => {
       console.log(`\n🎉 MaHaKalyanam Wedding Server`);
-      console.log(`   Ranjith & Nithaya — June 24, 2026`);
+      console.log(`   Ranjith & Nithya — June 24, 2026`);
       console.log(`   Server running on http://localhost:${PORT}`);
       console.log(`   Health check: http://localhost:${PORT}/api/health\n`);
     });

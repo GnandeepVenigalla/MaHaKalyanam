@@ -131,7 +131,7 @@ async function seedSiteContent() {
   if (count > 0) return;
 
   const defaults = [
-    { key: 'bride_name',       value: 'Nithaya' },
+    { key: 'bride_name',       value: 'Nithya' },
     { key: 'groom_name',       value: 'Ranjith' },
     { key: 'wedding_date',     value: '2026-06-24' },
     { key: 'wedding_time',     value: '09:30 AM' },
@@ -139,7 +139,7 @@ async function seedSiteContent() {
     {
       key: 'welcome_message',
       value:
-        'With the blessings of Lord Venkateswara and our beloved families, we joyfully invite you to celebrate the union of Ranjith & Nithaya. Your presence will make our special day truly memorable.',
+        'With the blessings of Lord Venkateswara and our beloved families, we joyfully invite you to celebrate the union of Ranjith & Nithya. Your presence will make our special day truly memorable.',
     },
     {
       key: 'hero_subtitle',
@@ -148,7 +148,7 @@ async function seedSiteContent() {
     {
       key: 'couple_story',
       value:
-        "What started as a chance meeting blossomed into a beautiful journey of love, laughter, and countless chai dates. Ranjith's calm demeanor perfectly complements Nithaya's vibrant energy, and together they have built a bond that is nothing short of magical. Now, surrounded by the love of family and friends, they are ready to begin their forever together.",
+        "What started as a chance meeting blossomed into a beautiful journey of love, laughter, and countless chai dates. Ranjith's calm demeanor perfectly complements Nithya's vibrant energy, and together they have built a bond that is nothing short of magical. Now, surrounded by the love of family and friends, they are ready to begin their forever together.",
     },
     { key: 'bride_parents',    value: 'Mr. & Mrs. Raghunath' },
     { key: 'groom_parents',    value: 'Mr. & Mrs. Venkatesh' },
@@ -157,7 +157,7 @@ async function seedSiteContent() {
     { key: 'venue_map_link',   value: '' },
     {
       key: 'footer_message',
-      value: 'Made with ❤️ for Ranjith & Nithaya | #MaHaKalyanam',
+      value: 'Made with ❤️ for Ranjith & Nithya | #MaHaKalyanam',
     },
     { key: 'akshintalu_count', value: '0' },
   ];
