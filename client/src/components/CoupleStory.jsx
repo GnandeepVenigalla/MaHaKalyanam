@@ -52,7 +52,7 @@ export default function CoupleStory() {
           animate={isInView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6, delay: 0.8 }}
         >
-          <span className="couple-story__sig-text">{content.groom_name || 'Ranjith'} & {content.bride_name || 'Nithaya'}</span>
+          <span className="couple-story__sig-text">{content.groom_name || 'Ranjith'} & {content.bride_name || 'Nithya'}</span>
         </motion.div>
       </div>
 

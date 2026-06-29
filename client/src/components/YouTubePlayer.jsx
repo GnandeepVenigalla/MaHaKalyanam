@@ -9,7 +9,7 @@ export default function YouTubePlayer() {
   const inView = useInView(ref, { once: true, margin: '-80px' });
 
   const defaultVideos = [
-    { id: 1, title: 'Rajith and Nithaya - Pre Wedding shoot', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
+    { id: 1, title: 'Rajith and Nithya - Pre Wedding shoot', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
   ];
 
   const videos = youtube?.length > 0 ? youtube : defaultVideos;
