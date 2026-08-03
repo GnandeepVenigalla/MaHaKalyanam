@@ -9,6 +9,7 @@ import EventDetails from '../components/EventDetails';
 import RSVPForm from '../components/RSVPForm';
 import FamilyDetails from '../components/FamilyDetails';
 import Footer from '../components/Footer';
+import RSVPBanner from '../components/RSVPBanner';
 
 function HomeContent() {
   const { loading, content } = useSiteData();
@@ -54,6 +55,7 @@ function HomeContent() {
           pointerEvents: isVisible ? 'auto' : 'none',
         }}
       >
+        <RSVPBanner />
         <Navigation />
         {/* key forces Hero to fully remount (fresh animations) once visible */}
         <Hero key={isVisible ? 'shown' : 'hidden'} shouldAnimate={isVisible} />

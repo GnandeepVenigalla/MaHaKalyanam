@@ -279,3 +279,100 @@ p { color: var(--text-secondary); line-height: 1.8; max-width: 60ch; }
   html { font-size: 14px; }
   :root { --container-padding: 16px; }
 }
+
+/* ─── RSVP Deadline Banner ───────────────────────── */
+.rsvp-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px 48px 11px 16px;
+  background: linear-gradient(90deg,
+    var(--color-burgundy-deep, #060E22) 0%,
+    var(--color-burgundy, #0C1A3A) 40%,
+    var(--color-burgundy, #0C1A3A) 60%,
+    var(--color-burgundy-deep, #060E22) 100%
+  );
+  border-top: 1.5px solid var(--color-gold-dark, #A89858);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+/* shimmer sweep */
+.rsvp-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(201, 184, 123, 0.08) 50%,
+    transparent 80%
+  );
+  animation: bannerShimmer 3.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes bannerShimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.rsvp-banner__icon {
+  font-size: 0.85rem;
+  line-height: 1;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.rsvp-banner__text {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 0.9rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--color-gold-light, #DED0A0);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.rsvp-banner__text strong {
+  font-weight: 600;
+  color: var(--color-gold, #C9B87B);
+}
+
+.rsvp-banner__close {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-gold-dark, #A89858);
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.rsvp-banner__close:hover {
+  color: var(--color-gold, #C9B87B);
+  background: rgba(201, 184, 123, 0.1);
+}
+
+@media (max-width: 480px) {
+  .rsvp-banner {
+    padding: 9px 40px 9px 12px;
+    gap: 7px;
+  }
+  .rsvp-banner__text { font-size: 0.8rem; }
+  .rsvp-banner__icon { display: none; }
+}
+

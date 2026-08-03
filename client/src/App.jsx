@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './pages/Home';
 import Videos from './pages/Videos';
 import AdminLogin from './pages/AdminLogin';
@@ -13,11 +13,17 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-export default function App() {
+/** Audio player — only mounts on non-admin routes */
+function SiteAudio() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
   const audioRef = useRef(null);
   const [isMuted, setIsMuted] = useState(true);
 
   useEffect(() => {
+    if (isAdminRoute) return;
+
     const audio = audioRef.current;
     if (!audio) return;
 
@@ -50,18 +56,26 @@ export default function App() {
       window.removeEventListener('click', handleInteraction);
       window.removeEventListener('touchstart', handleInteraction);
     };
-  }, []);
+  }, [isAdminRoute]);
+
+  if (isAdminRoute) return null;
 
   return (
+    <audio
+      ref={audioRef}
+      src="/My Audio.mp3"
+      autoPlay
+      loop
+      muted={isMuted}
+      preload="auto"
+    />
+  );
+}
+
+export default function App() {
+  return (
     <BrowserRouter>
-      <audio
-        ref={audioRef}
-        src="/My Audio.mp3"
-        autoPlay
-        loop
-        muted={isMuted}
-        preload="auto"
-      />
+      <SiteAudio />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/videos" element={<Videos />} />
